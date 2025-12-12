@@ -15,10 +15,10 @@ export namespace main {
 	    uint16LE?: number;
 	    uint32LE?: number;
 	    uint64LE?: number;
-	    float32BE?: number;
-	    float64BE?: number;
-	    float32LE?: number;
-	    float64LE?: number;
+	    float32BE?: string;
+	    float64BE?: string;
+	    float32LE?: string;
+	    float64LE?: string;
 	    binary?: string;
 	    bytes?: string;
 	

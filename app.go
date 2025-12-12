@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"math"
 
 	"hexview/convert"
 )
@@ -47,15 +48,42 @@ type ConversionResult struct {
 	Uint32LE *uint32 `json:"uint32LE,omitempty"`
 	Uint64LE *uint64 `json:"uint64LE,omitempty"`
 
-	// Floating Point
-	Float32BE *float32 `json:"float32BE,omitempty"`
-	Float64BE *float64 `json:"float64BE,omitempty"`
-	Float32LE *float32 `json:"float32LE,omitempty"`
-	Float64LE *float64 `json:"float64LE,omitempty"`
+	// Floating Point (stored as strings to support NaN/Inf)
+	Float32BE *string `json:"float32BE,omitempty"`
+	Float64BE *string `json:"float64BE,omitempty"`
+	Float32LE *string `json:"float32LE,omitempty"`
+	Float64LE *string `json:"float64LE,omitempty"`
 
 	// Binary Representations
 	Binary string `json:"binary,omitempty"`
 	Bytes  string `json:"bytes,omitempty"`
+}
+
+// formatFloat converts float values to strings, handling NaN and Inf
+func formatFloat32(v float32) string {
+	if math.IsNaN(float64(v)) {
+		return "NaN"
+	}
+	if math.IsInf(float64(v), 1) {
+		return "+Inf"
+	}
+	if math.IsInf(float64(v), -1) {
+		return "-Inf"
+	}
+	return fmt.Sprintf("%g", v)
+}
+
+func formatFloat64(v float64) string {
+	if math.IsNaN(v) {
+		return "NaN"
+	}
+	if math.IsInf(v, 1) {
+		return "+Inf"
+	}
+	if math.IsInf(v, -1) {
+		return "-Inf"
+	}
+	return fmt.Sprintf("%g", v)
 }
 
 // ConvertHex performs all possible conversions on the hex input
@@ -127,16 +155,20 @@ func (a *App) ConvertHex(hexInput string) (*ConversionResult, error) {
 
 	// Try float conversions
 	if v, err := convert.HexToFloat32(hexInput); err == nil {
-		result.Float32BE = &v
+		formatted := formatFloat32(v)
+		result.Float32BE = &formatted
 	}
 	if v, err := convert.HexToFloat64(hexInput); err == nil {
-		result.Float64BE = &v
+		formatted := formatFloat64(v)
+		result.Float64BE = &formatted
 	}
 	if v, err := convert.HexToFloat32LE(hexInput); err == nil {
-		result.Float32LE = &v
+		formatted := formatFloat32(v)
+		result.Float32LE = &formatted
 	}
 	if v, err := convert.HexToFloat64LE(hexInput); err == nil {
-		result.Float64LE = &v
+		formatted := formatFloat64(v)
+		result.Float64LE = &formatted
 	}
 
 	return result, nil
@@ -363,16 +395,20 @@ func (a *App) ConvertBinary(binaryInput string) (*ConversionResult, error) {
 
 	// Try float conversions
 	if v, err := convert.HexToFloat32(hexStr); err == nil {
-		result.Float32BE = &v
+		formatted := formatFloat32(v)
+		result.Float32BE = &formatted
 	}
 	if v, err := convert.HexToFloat64(hexStr); err == nil {
-		result.Float64BE = &v
+		formatted := formatFloat64(v)
+		result.Float64BE = &formatted
 	}
 	if v, err := convert.HexToFloat32LE(hexStr); err == nil {
-		result.Float32LE = &v
+		formatted := formatFloat32(v)
+		result.Float32LE = &formatted
 	}
 	if v, err := convert.HexToFloat64LE(hexStr); err == nil {
-		result.Float64LE = &v
+		formatted := formatFloat64(v)
+		result.Float64LE = &formatted
 	}
 
 	return result, nil
