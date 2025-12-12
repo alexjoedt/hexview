@@ -1,8 +1,10 @@
 <script>
-  import { ConvertHex } from '../wailsjs/go/main/App.js'
+  import { ConvertHex, ConvertInt } from '../wailsjs/go/main/App.js'
   
   // State
-  let hexInput = ''
+  let inputMode = 'hex' // 'hex' or 'int'
+  let intType = 'int16' // Default to int16 (common for Modbus)
+  let inputValue = ''
   let result = null
   let error = null
   let isLoading = false
@@ -17,20 +19,24 @@
   
   // Reactive conversion with debounce
   $: {
-    if (hexInput.trim() === '') {
+    if (inputValue.trim() === '') {
       result = null
       error = null
     } else {
-      debouncedConvert(hexInput)
+      debouncedConvert(inputValue, inputMode, intType)
     }
   }
   
-  function debouncedConvert(input) {
+  function debouncedConvert(input, mode, type) {
     clearTimeout(debounceTimer)
     isLoading = true
     
     debounceTimer = setTimeout(() => {
-      ConvertHex(input)
+      const conversionPromise = mode === 'hex' 
+        ? ConvertHex(input)
+        : ConvertInt(input, type)
+      
+      conversionPromise
         .then(res => {
           result = res
           error = null
@@ -62,7 +68,7 @@
   }
   
   function clearInput() {
-    hexInput = ''
+    inputValue = ''
     result = null
     error = null
   }
@@ -99,11 +105,42 @@
     
     <!-- Input Section -->
     <section class="input-section">
+      <!-- Mode Selector -->
+      <div class="mode-selector">
+        <button 
+          class="mode-btn" 
+          class:active={inputMode === 'hex'}
+          on:click={() => inputMode = 'hex'}
+        >
+          Hex
+        </button>
+        <button 
+          class="mode-btn" 
+          class:active={inputMode === 'int'}
+          on:click={() => inputMode = 'int'}
+        >
+          Integer
+        </button>
+        
+        {#if inputMode === 'int'}
+          <select class="type-selector" bind:value={intType}>
+            <option value="int8">INT8</option>
+            <option value="int16">INT16</option>
+            <option value="int32">INT32</option>
+            <option value="int64">INT64</option>
+            <option value="uint8">UINT8</option>
+            <option value="uint16">UINT16</option>
+            <option value="uint32">UINT32</option>
+            <option value="uint64">UINT64</option>
+          </select>
+        {/if}
+      </div>
+      
       <input
-        id="hex-input"
+        id="input-field"
         type="text"
-        bind:value={hexInput}
-        placeholder="Enter hex (e.g., 0xFF, 1A 2B 3C, 1A:2B:3C)"
+        bind:value={inputValue}
+        placeholder={inputMode === 'hex' ? 'Enter hex (e.g., 0xFF, 1A 2B 3C, 1A:2B:3C)' : 'Enter integer (e.g., 1234, -456)'}
         autocomplete="off"
         autofocus
         class:error={error}
@@ -113,9 +150,9 @@
         <div class="error-message">⚠️ {error}</div>
       {/if}
       
-      {#if !hexInput && !result}
+      {#if !inputValue && !result}
         <div class="help-text">
-          Enter hex to convert • <kbd>⌘K</kbd> to clear
+          {inputMode === 'hex' ? 'Enter hex to convert' : 'Enter integer to convert'} • <kbd>⌘K</kbd> to clear
         </div>
       {/if}
     </section>
@@ -445,6 +482,61 @@
   .input-section {
     margin-bottom: var(--spacing-md);
     flex-shrink: 0;
+  }
+
+  /* Mode Selector */
+  .mode-selector {
+    display: flex;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-sm);
+    align-items: center;
+  }
+
+  .mode-btn {
+    padding: var(--spacing-xs) var(--spacing-md);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .mode-btn:hover {
+    background: var(--bg-hover);
+    border-color: var(--text-tertiary);
+  }
+
+  .mode-btn.active {
+    background: var(--color-int-signed);
+    color: white;
+    border-color: var(--color-int-signed);
+  }
+
+  .type-selector {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-size: 11px;
+    font-weight: 600;
+    font-family: var(--font-mono);
+    cursor: pointer;
+    transition: all 0.15s;
+    min-width: 80px;
+  }
+
+  .type-selector:hover {
+    background: var(--bg-hover);
+    border-color: var(--text-tertiary);
+  }
+
+  .type-selector:focus {
+    outline: none;
+    border-color: var(--color-int-signed);
   }
 
   .input-section input {

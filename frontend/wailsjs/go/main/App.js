@@ -5,3 +5,7 @@
 export function ConvertHex(arg1) {
   return window['go']['main']['App']['ConvertHex'](arg1);
 }
+
+export function ConvertInt(arg1, arg2) {
+  return window['go']['main']['App']['ConvertInt'](arg1, arg2);
+}
