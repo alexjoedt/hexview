@@ -753,16 +753,6 @@
                 </tr>
               {/if}
               
-              {#if result.paddedHex}
-                <tr class="highlighted">
-                  <td class="type-cell"><span class="type-badge bytes">PADDED</span></td>
-                  <td class="value-cell-with-copy mono wide">
-                    <span class="value-text">{result.paddedHex}</span>
-                    <button class="copy-btn-inline" on:click={() => copyToClipboard(result.paddedHex)} title="Copy">📋</button>
-                  </td>
-                </tr>
-              {/if}
-              
               {#if result.binary}
                 <tr>
                   <td class="type-cell"><span class="type-badge binary">BIN</span></td>
