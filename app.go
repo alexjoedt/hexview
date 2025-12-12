@@ -357,6 +357,7 @@ func (a *App) ConvertInt(intInput string, intType string) (*ConversionResult, er
 		result.Binary = convert.BytesToBinary(bytes)
 		result.Bytes = hexStr
 		result.Int8BE = &val
+		result.Int8BEHex = hexStr
 		return result, nil
 
 	case "int16":
@@ -371,9 +372,11 @@ func (a *App) ConvertInt(intInput string, intType string) (*ConversionResult, er
 		result.Binary = convert.BytesToBinary(bytes)
 		result.Bytes = hexStrBE
 		result.Int16BE = &val
+		result.Int16BEHex = hexStrBE
 		// Also populate LE conversion
 		if vLE, err := convert.HexToInt16LE(hexStrLE); err == nil {
 			result.Int16LE = &vLE
+			result.Int16LEHex = hexStrLE
 		}
 		return result, nil
 
@@ -389,9 +392,11 @@ func (a *App) ConvertInt(intInput string, intType string) (*ConversionResult, er
 		result.Binary = convert.BytesToBinary(bytes)
 		result.Bytes = hexStrBE
 		result.Int32BE = &val
+		result.Int32BEHex = hexStrBE
 		// Also populate LE conversion
 		if vLE, err := convert.HexToInt32LE(hexStrLE); err == nil {
 			result.Int32LE = &vLE
+			result.Int32LEHex = hexStrLE
 		}
 		return result, nil
 
@@ -407,9 +412,11 @@ func (a *App) ConvertInt(intInput string, intType string) (*ConversionResult, er
 		result.Binary = convert.BytesToBinary(bytes)
 		result.Bytes = hexStrBE
 		result.Int64BE = &val
+		result.Int64BEHex = hexStrBE
 		// Also populate LE conversion
 		if vLE, err := convert.HexToInt64LE(hexStrLE); err == nil {
 			result.Int64LE = &vLE
+			result.Int64LEHex = hexStrLE
 		}
 		return result, nil
 
@@ -424,6 +431,7 @@ func (a *App) ConvertInt(intInput string, intType string) (*ConversionResult, er
 		result.Binary = convert.BytesToBinary(bytes)
 		result.Bytes = hexStr
 		result.Uint8BE = &val
+		result.Uint8BEHex = hexStr
 		return result, nil
 
 	case "uint16":
@@ -438,9 +446,11 @@ func (a *App) ConvertInt(intInput string, intType string) (*ConversionResult, er
 		result.Binary = convert.BytesToBinary(bytes)
 		result.Bytes = hexStrBE
 		result.Uint16BE = &val
+		result.Uint16BEHex = hexStrBE
 		// Also populate LE conversion
 		if vLE, err := convert.HexToUint16LE(hexStrLE); err == nil {
 			result.Uint16LE = &vLE
+			result.Uint16LEHex = hexStrLE
 		}
 		return result, nil
 
@@ -456,9 +466,11 @@ func (a *App) ConvertInt(intInput string, intType string) (*ConversionResult, er
 		result.Binary = convert.BytesToBinary(bytes)
 		result.Bytes = hexStrBE
 		result.Uint32BE = &val
+		result.Uint32BEHex = hexStrBE
 		// Also populate LE conversion
 		if vLE, err := convert.HexToUint32LE(hexStrLE); err == nil {
 			result.Uint32LE = &vLE
+			result.Uint32LEHex = hexStrLE
 		}
 		return result, nil
 
@@ -474,9 +486,11 @@ func (a *App) ConvertInt(intInput string, intType string) (*ConversionResult, er
 		result.Binary = convert.BytesToBinary(bytes)
 		result.Bytes = hexStrBE
 		result.Uint64BE = &val
+		result.Uint64BEHex = hexStrBE
 		// Also populate LE conversion
 		if vLE, err := convert.HexToUint64LE(hexStrLE); err == nil {
 			result.Uint64LE = &vLE
+			result.Uint64LEHex = hexStrLE
 		}
 		return result, nil
 
@@ -508,69 +522,169 @@ func (a *App) ConvertBinary(binaryInput string) (*ConversionResult, error) {
 	// Try all signed integer conversions (Big Endian)
 	if v, err := convert.HexToInt8(hexStr); err == nil {
 		result.Int8BE = &v
+		result.Int8BEHex = convert.Int8ToHex(v)
 	}
 	if v, err := convert.HexToInt16(hexStr); err == nil {
 		result.Int16BE = &v
+		result.Int16BEHex = convert.Int16ToHex(v)
 	}
 	if v, err := convert.HexToInt32(hexStr); err == nil {
 		result.Int32BE = &v
+		result.Int32BEHex = convert.Int32ToHex(v)
 	}
 	if v, err := convert.HexToInt64(hexStr); err == nil {
 		result.Int64BE = &v
+		result.Int64BEHex = convert.Int64ToHex(v)
 	}
 
 	// Try all signed integer conversions (Little Endian)
 	if v, err := convert.HexToInt16LE(hexStr); err == nil {
 		result.Int16LE = &v
+		result.Int16LEHex = convert.Int16ToHexLE(v)
 	}
 	if v, err := convert.HexToInt32LE(hexStr); err == nil {
 		result.Int32LE = &v
+		result.Int32LEHex = convert.Int32ToHexLE(v)
 	}
 	if v, err := convert.HexToInt64LE(hexStr); err == nil {
 		result.Int64LE = &v
+		result.Int64LEHex = convert.Int64ToHexLE(v)
+	}
+
+	// Try all signed integer conversions (Mid-Big Endian / BADC)
+	if v, err := convert.HexToInt16BADC(hexStr); err == nil {
+		result.Int16BADC = &v
+		result.Int16BADCHex = convert.Int16ToHexBADC(v)
+	}
+	if v, err := convert.HexToInt32BADC(hexStr); err == nil {
+		result.Int32BADC = &v
+		result.Int32BADCHex = convert.Int32ToHexBADC(v)
+	}
+	if v, err := convert.HexToInt64BADC(hexStr); err == nil {
+		result.Int64BADC = &v
+		result.Int64BADCHex = convert.Int64ToHexBADC(v)
+	}
+
+	// Try all signed integer conversions (Mid-Little Endian / CDAB)
+	if v, err := convert.HexToInt16CDAB(hexStr); err == nil {
+		result.Int16CDAB = &v
+		result.Int16CDABHex = convert.Int16ToHexCDAB(v)
+	}
+	if v, err := convert.HexToInt32CDAB(hexStr); err == nil {
+		result.Int32CDAB = &v
+		result.Int32CDABHex = convert.Int32ToHexCDAB(v)
+	}
+	if v, err := convert.HexToInt64CDAB(hexStr); err == nil {
+		result.Int64CDAB = &v
+		result.Int64CDABHex = convert.Int64ToHexCDAB(v)
 	}
 
 	// Try all unsigned integer conversions (Big Endian)
 	if v, err := convert.HexToUint8(hexStr); err == nil {
 		result.Uint8BE = &v
+		result.Uint8BEHex = convert.Uint8ToHex(v)
 	}
 	if v, err := convert.HexToUint16(hexStr); err == nil {
 		result.Uint16BE = &v
+		result.Uint16BEHex = convert.Uint16ToHex(v)
 	}
 	if v, err := convert.HexToUint32(hexStr); err == nil {
 		result.Uint32BE = &v
+		result.Uint32BEHex = convert.Uint32ToHex(v)
 	}
 	if v, err := convert.HexToUint64(hexStr); err == nil {
 		result.Uint64BE = &v
+		result.Uint64BEHex = convert.Uint64ToHex(v)
 	}
 
 	// Try all unsigned integer conversions (Little Endian)
 	if v, err := convert.HexToUint16LE(hexStr); err == nil {
 		result.Uint16LE = &v
+		result.Uint16LEHex = convert.Uint16ToHexLE(v)
 	}
 	if v, err := convert.HexToUint32LE(hexStr); err == nil {
 		result.Uint32LE = &v
+		result.Uint32LEHex = convert.Uint32ToHexLE(v)
 	}
 	if v, err := convert.HexToUint64LE(hexStr); err == nil {
 		result.Uint64LE = &v
+		result.Uint64LEHex = convert.Uint64ToHexLE(v)
 	}
 
-	// Try float conversions
+	// Try all unsigned integer conversions (Mid-Big Endian / BADC)
+	if v, err := convert.HexToUint16BADC(hexStr); err == nil {
+		result.Uint16BADC = &v
+		result.Uint16BADCHex = convert.Uint16ToHexBADC(v)
+	}
+	if v, err := convert.HexToUint32BADC(hexStr); err == nil {
+		result.Uint32BADC = &v
+		result.Uint32BADCHex = convert.Uint32ToHexBADC(v)
+	}
+	if v, err := convert.HexToUint64BADC(hexStr); err == nil {
+		result.Uint64BADC = &v
+		result.Uint64BADCHex = convert.Uint64ToHexBADC(v)
+	}
+
+	// Try all unsigned integer conversions (Mid-Little Endian / CDAB)
+	if v, err := convert.HexToUint16CDAB(hexStr); err == nil {
+		result.Uint16CDAB = &v
+		result.Uint16CDABHex = convert.Uint16ToHexCDAB(v)
+	}
+	if v, err := convert.HexToUint32CDAB(hexStr); err == nil {
+		result.Uint32CDAB = &v
+		result.Uint32CDABHex = convert.Uint32ToHexCDAB(v)
+	}
+	if v, err := convert.HexToUint64CDAB(hexStr); err == nil {
+		result.Uint64CDAB = &v
+		result.Uint64CDABHex = convert.Uint64ToHexCDAB(v)
+	}
+
+	// Try float conversions (Big Endian)
 	if v, err := convert.HexToFloat32(hexStr); err == nil {
 		formatted := formatFloat32(v)
 		result.Float32BE = &formatted
+		result.Float32BEHex = convert.Float32ToHex(v)
 	}
 	if v, err := convert.HexToFloat64(hexStr); err == nil {
 		formatted := formatFloat64(v)
 		result.Float64BE = &formatted
+		result.Float64BEHex = convert.Float64ToHex(v)
 	}
+
+	// Try float conversions (Little Endian)
 	if v, err := convert.HexToFloat32LE(hexStr); err == nil {
 		formatted := formatFloat32(v)
 		result.Float32LE = &formatted
+		result.Float32LEHex = convert.Float32ToHexLE(v)
 	}
 	if v, err := convert.HexToFloat64LE(hexStr); err == nil {
 		formatted := formatFloat64(v)
 		result.Float64LE = &formatted
+		result.Float64LEHex = convert.Float64ToHexLE(v)
+	}
+
+	// Try float conversions (Mid-Big Endian / BADC)
+	if v, err := convert.HexToFloat32BADC(hexStr); err == nil {
+		formatted := formatFloat32(v)
+		result.Float32BADC = &formatted
+		result.Float32BADCHex = convert.Float32ToHexBADC(v)
+	}
+	if v, err := convert.HexToFloat64BADC(hexStr); err == nil {
+		formatted := formatFloat64(v)
+		result.Float64BADC = &formatted
+		result.Float64BADCHex = convert.Float64ToHexBADC(v)
+	}
+
+	// Try float conversions (Mid-Little Endian / CDAB)
+	if v, err := convert.HexToFloat32CDAB(hexStr); err == nil {
+		formatted := formatFloat32(v)
+		result.Float32CDAB = &formatted
+		result.Float32CDABHex = convert.Float32ToHexCDAB(v)
+	}
+	if v, err := convert.HexToFloat64CDAB(hexStr); err == nil {
+		formatted := formatFloat64(v)
+		result.Float64CDAB = &formatted
+		result.Float64CDABHex = convert.Float64ToHexCDAB(v)
 	}
 
 	return result, nil
