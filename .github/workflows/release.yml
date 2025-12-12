@@ -1,0 +1,131 @@
+name: Release Build
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # Trigger on semantic version tags (e.g., v1.0.0, v2.1.3)
+
+env:
+  # Prevent out-of-memory build failures
+  NODE_OPTIONS: "--max-old-space-size=4096"
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false  # Continue building other platforms if one fails
+      matrix:
+        include:
+          - name: 'hexview'
+            platform: 'linux/amd64'
+            os: 'ubuntu-latest'
+            artifact-name: 'hexview-linux-amd64'
+            artifact-path: 'build/bin/hexview'
+          
+          - name: 'hexview'
+            platform: 'windows/amd64'
+            os: 'windows-latest'
+            artifact-name: 'hexview-windows-amd64'
+            artifact-path: 'build/bin/hexview.exe'
+          
+          - name: 'hexview'
+            platform: 'darwin/universal'
+            os: 'macos-latest'
+            artifact-name: 'hexview-macos-universal'
+            artifact-path: 'build/bin/hexview.app'
+
+    runs-on: ${{ matrix.os }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        run: npm install
+        working-directory: frontend
+
+      - name: Install Wails
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@v2.11.0
+
+      - name: Install Linux dependencies
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev
+
+      - name: Build application
+        run: wails build -clean -ldflags "-w -s" -platform ${{ matrix.platform }}
+
+      - name: Create tarball (Linux/macOS)
+        if: matrix.os != 'windows-latest'
+        run: |
+          cd build/bin
+          if [ "${{ matrix.os }}" = "macos-latest" ]; then
+            tar -czf ${{ matrix.artifact-name }}.tar.gz hexview.app
+          else
+            tar -czf ${{ matrix.artifact-name }}.tar.gz hexview
+          fi
+
+      - name: Create zip (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          cd build/bin
+          Compress-Archive -Path hexview.exe -DestinationPath ${{ matrix.artifact-name }}.zip
+
+      - name: Upload artifact (Linux/macOS)
+        if: matrix.os != 'windows-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact-name }}
+          path: build/bin/${{ matrix.artifact-name }}.tar.gz
+          retention-days: 5
+
+      - name: Upload artifact (Windows)
+        if: matrix.os == 'windows-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact-name }}
+          path: build/bin/${{ matrix.artifact-name }}.zip
+          retention-days: 5
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Display artifact structure
+        run: ls -R artifacts
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          files: |
+            artifacts/hexview-linux-amd64/hexview-linux-amd64.tar.gz
+            artifacts/hexview-windows-amd64/hexview-windows-amd64.zip
+            artifacts/hexview-macos-universal/hexview-macos-universal.tar.gz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
