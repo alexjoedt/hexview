@@ -174,7 +174,7 @@
             </thead>
             <tbody>
               <!-- INT8 -->
-              <tr class:unavailable={!hasValue(result.int8BE)}>
+              <tr class:unavailable={!hasValue(result.int8BE)} class:highlighted={inputMode === 'int' && intType === 'int8'}>
                 <td class="type-cell"><span class="type-badge int-signed">INT8</span></td>
                 <td class="value-cell">{formatValue(result.int8BE)}</td>
                 <td class="value-cell na">—</td>
@@ -186,7 +186,7 @@
               </tr>
               
               <!-- INT16 -->
-              <tr class:unavailable={!hasValue(result.int16BE) && !hasValue(result.int16LE)}>
+              <tr class:unavailable={!hasValue(result.int16BE) && !hasValue(result.int16LE)} class:highlighted={inputMode === 'int' && intType === 'int16'}>
                 <td class="type-cell"><span class="type-badge int-signed">INT16</span></td>
                 <td class="value-cell">{formatValue(result.int16BE)}</td>
                 <td class="value-cell">{formatValue(result.int16LE)}</td>
@@ -200,7 +200,7 @@
               </tr>
               
               <!-- INT32 -->
-              <tr class:unavailable={!hasValue(result.int32BE) && !hasValue(result.int32LE)}>
+              <tr class:unavailable={!hasValue(result.int32BE) && !hasValue(result.int32LE)} class:highlighted={inputMode === 'int' && intType === 'int32'}>
                 <td class="type-cell"><span class="type-badge int-signed">INT32</span></td>
                 <td class="value-cell">{formatValue(result.int32BE)}</td>
                 <td class="value-cell">{formatValue(result.int32LE)}</td>
@@ -214,7 +214,7 @@
               </tr>
               
               <!-- INT64 -->
-              <tr class:unavailable={!hasValue(result.int64BE) && !hasValue(result.int64LE)}>
+              <tr class:unavailable={!hasValue(result.int64BE) && !hasValue(result.int64LE)} class:highlighted={inputMode === 'int' && intType === 'int64'}>
                 <td class="type-cell"><span class="type-badge int-signed">INT64</span></td>
                 <td class="value-cell">{formatValue(result.int64BE)}</td>
                 <td class="value-cell">{formatValue(result.int64LE)}</td>
@@ -228,7 +228,7 @@
               </tr>
               
               <!-- UINT8 -->
-              <tr class:unavailable={!hasValue(result.uint8BE)}>
+              <tr class:unavailable={!hasValue(result.uint8BE)} class:highlighted={inputMode === 'int' && intType === 'uint8'}>
                 <td class="type-cell"><span class="type-badge int-unsigned">UINT8</span></td>
                 <td class="value-cell">{formatValue(result.uint8BE)}</td>
                 <td class="value-cell na">—</td>
@@ -240,7 +240,7 @@
               </tr>
               
               <!-- UINT16 -->
-              <tr class:unavailable={!hasValue(result.uint16BE) && !hasValue(result.uint16LE)}>
+              <tr class:unavailable={!hasValue(result.uint16BE) && !hasValue(result.uint16LE)} class:highlighted={inputMode === 'int' && intType === 'uint16'}>
                 <td class="type-cell"><span class="type-badge int-unsigned">UINT16</span></td>
                 <td class="value-cell">{formatValue(result.uint16BE)}</td>
                 <td class="value-cell">{formatValue(result.uint16LE)}</td>
@@ -254,7 +254,7 @@
               </tr>
               
               <!-- UINT32 -->
-              <tr class:unavailable={!hasValue(result.uint32BE) && !hasValue(result.uint32LE)}>
+              <tr class:unavailable={!hasValue(result.uint32BE) && !hasValue(result.uint32LE)} class:highlighted={inputMode === 'int' && intType === 'uint32'}>
                 <td class="type-cell"><span class="type-badge int-unsigned">UINT32</span></td>
                 <td class="value-cell">{formatValue(result.uint32BE)}</td>
                 <td class="value-cell">{formatValue(result.uint32LE)}</td>
@@ -268,7 +268,7 @@
               </tr>
               
               <!-- UINT64 -->
-              <tr class:unavailable={!hasValue(result.uint64BE) && !hasValue(result.uint64LE)}>
+              <tr class:unavailable={!hasValue(result.uint64BE) && !hasValue(result.uint64LE)} class:highlighted={inputMode === 'int' && intType === 'uint64'}>
                 <td class="type-cell"><span class="type-badge int-unsigned">UINT64</span></td>
                 <td class="value-cell">{formatValue(result.uint64BE)}</td>
                 <td class="value-cell">{formatValue(result.uint64LE)}</td>
@@ -656,6 +656,15 @@
 
   tbody tr.unavailable {
     opacity: 0.4;
+  }
+
+  tbody tr.highlighted {
+    background: rgba(37, 99, 235, 0.08) !important;
+    border-left: 3px solid var(--color-int-signed);
+  }
+
+  .dark tbody tr.highlighted {
+    background: rgba(96, 165, 250, 0.12) !important;
   }
 
   tbody tr:not(:last-child) td {
