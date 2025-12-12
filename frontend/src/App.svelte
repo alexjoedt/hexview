@@ -1,8 +1,8 @@
 <script>
-  import { ConvertHex, ConvertInt } from '../wailsjs/go/main/App.js'
+  import { ConvertHex, ConvertInt, ConvertBinary } from '../wailsjs/go/main/App.js'
   
   // State
-  let inputMode = 'hex' // 'hex' or 'int'
+  let inputMode = 'hex' // 'hex', 'int', or 'binary'
   let intType = 'int16' // Default to int16 (common for Modbus)
   let inputValue = ''
   let result = null
@@ -32,9 +32,14 @@
     isLoading = true
     
     debounceTimer = setTimeout(() => {
-      const conversionPromise = mode === 'hex' 
-        ? ConvertHex(input)
-        : ConvertInt(input, type)
+      let conversionPromise
+      if (mode === 'hex') {
+        conversionPromise = ConvertHex(input)
+      } else if (mode === 'binary') {
+        conversionPromise = ConvertBinary(input)
+      } else {
+        conversionPromise = ConvertInt(input, type)
+      }
       
       conversionPromise
         .then(res => {
@@ -116,6 +121,13 @@
         </button>
         <button 
           class="mode-btn" 
+          class:active={inputMode === 'binary'}
+          on:click={() => inputMode = 'binary'}
+        >
+          Binary
+        </button>
+        <button 
+          class="mode-btn" 
           class:active={inputMode === 'int'}
           on:click={() => inputMode = 'int'}
         >
@@ -140,7 +152,7 @@
         id="input-field"
         type="text"
         bind:value={inputValue}
-        placeholder={inputMode === 'hex' ? 'Enter hex (e.g., 0xFF, 1A 2B 3C, 1A:2B:3C)' : 'Enter integer (e.g., 1234, -456)'}
+        placeholder={inputMode === 'hex' ? 'Enter hex (e.g., 0xFF, 1A 2B 3C, 1A:2B:3C)' : inputMode === 'binary' ? 'Enter binary (e.g., 1001 0000, 10011111)' : 'Enter integer (e.g., 1234, -456)'}
         autocomplete="off"
         autofocus
         class:error={error}
@@ -152,7 +164,7 @@
       
       {#if !inputValue && !result}
         <div class="help-text">
-          {inputMode === 'hex' ? 'Enter hex to convert' : 'Enter integer to convert'} • <kbd>⌘K</kbd> to clear
+          {inputMode === 'hex' ? 'Enter hex to convert' : inputMode === 'binary' ? 'Enter binary to convert' : 'Enter integer to convert'} • <kbd>⌘K</kbd> to clear
         </div>
       {/if}
     </section>
