@@ -6,6 +6,9 @@
   export let inputValue = ''
   export let error = null
   export let onClear
+  export let scaleFactor = 1
+  
+  let scaleInput = '1'
   
   function handleKeydown(event) {
     if ((event.metaKey || event.ctrlKey) && event.key === 'k') {
@@ -14,11 +17,23 @@
     }
   }
   
+  // Reactively update scaleFactor when scaleInput changes
+  $: {
+    const val = parseFloat(scaleInput)
+    if (!isNaN(val) && val !== 0) {
+      scaleFactor = val
+    }
+  }
+  
   $: placeholder = inputMode === 'hex' 
     ? 'Enter hex (e.g., 0x48656c6c6f or 48 65 6c 6c 6f)' 
     : inputMode === 'binary'
     ? 'Enter binary (e.g., 01001000 01100101)'
+    : inputMode === 'modbus'
+    ? 'Enter registers: hex (1234 5678), decimal (d1000 d2000), or mixed'
     : 'Enter integer value'
+    
+  $: isModbus = inputMode === 'modbus'
 </script>
 
 <div class="input-section">
@@ -27,6 +42,7 @@
       <button 
         class="mode-btn" 
         class:active={inputMode === mode.value}
+        class:modbus={mode.value === 'modbus' && inputMode === mode.value}
         on:click={() => inputMode = mode.value}
       >
         {mode.label}
@@ -41,6 +57,18 @@
       </select>
     {/if}
     
+    {#if isModbus}
+      <div class="scale-input">
+        <label for="scale">Scale:</label>
+        <input 
+          id="scale"
+          type="text" 
+          bind:value={scaleInput}
+          placeholder="1"
+        />
+      </div>
+    {/if}
+    
     {#if inputValue}
       <button class="clear-btn" on:click={onClear}>
         ✕ Clear
@@ -48,15 +76,27 @@
     {/if}
   </div>
   
-  <input
-    type="text"
-    bind:value={inputValue}
-    {placeholder}
-    class:error={error}
-    on:keydown={handleKeydown}
-    autocomplete="off"
-    spellcheck="false"
-  />
+  {#if isModbus}
+    <textarea
+      bind:value={inputValue}
+      {placeholder}
+      class:error={error}
+      on:keydown={handleKeydown}
+      autocomplete="off"
+      spellcheck="false"
+      rows="3"
+    ></textarea>
+  {:else}
+    <input
+      type="text"
+      bind:value={inputValue}
+      {placeholder}
+      class:error={error}
+      on:keydown={handleKeydown}
+      autocomplete="off"
+      spellcheck="false"
+    />
+  {/if}
   
   {#if error}
     <div class="error-message">
@@ -65,7 +105,11 @@
   {/if}
   
   <div class="help-text">
-    Press <kbd>⌘K</kbd> to clear input
+    {#if isModbus}
+      Enter multiple 16-bit registers: <kbd>hex</kbd> (0x1234, 5678) or <kbd>d</kbd> prefix for decimal (d1000)
+    {:else}
+      Press <kbd>⌘K</kbd> to clear input
+    {/if}
   </div>
 </div>
 
@@ -80,6 +124,7 @@
     gap: var(--spacing-sm);
     margin-bottom: var(--spacing-sm);
     align-items: center;
+    flex-wrap: wrap;
   }
 
   .mode-btn {
@@ -103,6 +148,11 @@
     background: var(--color-int-signed);
     color: white;
     border-color: var(--color-int-signed);
+  }
+
+  .mode-btn.modbus {
+    background: var(--color-int-unsigned);
+    border-color: var(--color-int-unsigned);
   }
 
   .type-selector {
@@ -129,6 +179,36 @@
     border-color: var(--color-int-signed);
   }
 
+  .scale-input {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+  }
+
+  .scale-input label {
+    font-size: 11px;
+    color: var(--text-secondary);
+    font-weight: 500;
+  }
+
+  .scale-input input {
+    width: 70px;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-size: 11px;
+    font-family: var(--font-mono);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    transition: all 0.15s;
+  }
+
+  .scale-input input:focus {
+    outline: none;
+    border-color: var(--color-int-unsigned);
+    background: var(--bg-primary);
+  }
+
   .clear-btn {
     padding: var(--spacing-xs) var(--spacing-sm);
     background: var(--bg-secondary);
@@ -147,7 +227,7 @@
     color: var(--text-primary);
   }
 
-  input {
+  input, textarea {
     width: 100%;
     padding: var(--spacing-sm) var(--spacing-md);
     font-size: 13px;
@@ -157,15 +237,22 @@
     border-radius: var(--radius-md);
     color: var(--text-primary);
     transition: all 0.15s;
+    box-sizing: border-box;
   }
 
-  input:focus {
+  textarea {
+    resize: vertical;
+    min-height: 80px;
+    line-height: 1.5;
+  }
+
+  input:focus, textarea:focus {
     outline: none;
     border-color: var(--color-int-signed);
     background: var(--bg-primary);
   }
 
-  input.error {
+  input.error, textarea.error {
     border-color: var(--color-error);
   }
 

@@ -4,6 +4,7 @@
   import IntegerTable from './components/IntegerTable.svelte'
   import FloatTable from './components/FloatTable.svelte'
   import BinaryTable from './components/BinaryTable.svelte'
+  import ModbusView from './components/ModbusView.svelte'
   import Toast from './components/Toast.svelte'
   import { convert } from './lib/api.js'
   
@@ -12,9 +13,11 @@
   let intType = 'int16'
   let inputValue = ''
   let result = null
+  let modbusResult = null
   let error = null
   let isLoading = false
   let debounceTimer = null
+  let scaleFactor = 1
   
   // Theme state
   let darkMode = window.matchMedia('(prefers-color-scheme: dark)').matches
@@ -30,6 +33,7 @@
   $: {
     if (inputValue.trim() === '') {
       result = null
+      modbusResult = null
       error = null
     } else {
       debouncedConvert(inputValue, inputMode, intType)
@@ -42,11 +46,19 @@
     
     debounceTimer = setTimeout(async () => {
       try {
-        result = await convert(input, mode, type)
+        const convertResult = await convert(input, mode, type)
+        if (mode === 'modbus') {
+          modbusResult = convertResult
+          result = null
+        } else {
+          result = convertResult
+          modbusResult = null
+        }
         error = null
       } catch (err) {
         error = err.message || String(err)
         result = null
+        modbusResult = null
       } finally {
         isLoading = false
       }
@@ -66,6 +78,7 @@
   function clearInput() {
     inputValue = ''
     result = null
+    modbusResult = null
     error = null
   }
 </script>
@@ -82,11 +95,16 @@
       bind:inputMode
       bind:intType
       bind:inputValue
+      bind:scaleFactor
       {error}
       onClear={clearInput}
     />
     
-    {#if result && !error}
+    {#if inputMode === 'modbus' && modbusResult && !error}
+      <section class="results">
+        <ModbusView result={modbusResult} {scaleFactor} onCopy={handleCopy} />
+      </section>
+    {:else if result && !error}
       <section class="results">
         <IntegerTable {result} {expertMode} onCopy={handleCopy} />
         <FloatTable {result} {expertMode} onCopy={handleCopy} />

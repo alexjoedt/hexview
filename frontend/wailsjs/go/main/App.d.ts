@@ -4,6 +4,10 @@ import {main} from '../models';
 
 export function ConvertBinary(arg1:string):Promise<main.ConversionResult>;
 
+export function ConvertFloat(arg1:string,arg2:string):Promise<main.ConversionResult>;
+
 export function ConvertHex(arg1:string):Promise<main.ConversionResult>;
 
 export function ConvertInt(arg1:string,arg2:string):Promise<main.ConversionResult>;
+
+export function ConvertModbusRegisters(arg1:string):Promise<main.ModbusResult>;

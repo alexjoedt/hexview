@@ -1,7 +1,7 @@
 /**
  * Wails API wrapper functions
  */
-import { ConvertHex, ConvertInt, ConvertBinary } from '../../wailsjs/go/main/App.js'
+import { ConvertHex, ConvertInt, ConvertBinary, ConvertModbusRegisters } from '../../wailsjs/go/main/App.js'
 
 /**
  * Convert hex string to all formats
@@ -25,6 +25,13 @@ export async function convertBinary(binaryInput) {
 }
 
 /**
+ * Convert Modbus registers (batch input)
+ */
+export async function convertModbus(input) {
+  return await ConvertModbusRegisters(input)
+}
+
+/**
  * Perform conversion based on input mode
  */
 export async function convert(inputValue, inputMode, intType) {
@@ -35,6 +42,8 @@ export async function convert(inputValue, inputMode, intType) {
       return await convertBinary(inputValue)
     case 'int':
       return await convertInt(inputValue, intType)
+    case 'modbus':
+      return await convertModbus(inputValue)
     default:
       throw new Error(`Unknown input mode: ${inputMode}`)
   }

@@ -6,10 +6,18 @@ export function ConvertBinary(arg1) {
   return window['go']['main']['App']['ConvertBinary'](arg1);
 }
 
+export function ConvertFloat(arg1, arg2) {
+  return window['go']['main']['App']['ConvertFloat'](arg1, arg2);
+}
+
 export function ConvertHex(arg1) {
   return window['go']['main']['App']['ConvertHex'](arg1);
 }
 
 export function ConvertInt(arg1, arg2) {
   return window['go']['main']['App']['ConvertInt'](arg1, arg2);
+}
+
+export function ConvertModbusRegisters(arg1) {
+  return window['go']['main']['App']['ConvertModbusRegisters'](arg1);
 }

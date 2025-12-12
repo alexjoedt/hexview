@@ -119,6 +119,57 @@ type ConversionResult struct {
 	// Binary Representations
 	Binary string `json:"binary,omitempty"`
 	Bytes  string `json:"bytes,omitempty"`
+
+	// ASCII representation (printable chars, '.' for non-printable)
+	ASCII string `json:"ascii,omitempty"`
+}
+
+// ModbusRegister represents a single 16-bit Modbus register
+type ModbusRegister struct {
+	Index    int    `json:"index"`
+	Hex      string `json:"hex"`
+	Unsigned uint16 `json:"unsigned"`
+	Signed   int16  `json:"signed"`
+	Binary   string `json:"binary"`
+}
+
+// ModbusCombined32 represents a 32-bit value from two registers
+type ModbusCombined32 struct {
+	RegisterStart int     `json:"registerStart"`
+	Hex           string  `json:"hex"`
+	Uint32BE      uint32  `json:"uint32BE"`
+	Uint32LE      uint32  `json:"uint32LE"`
+	Uint32BADC    uint32  `json:"uint32BADC"`
+	Uint32CDAB    uint32  `json:"uint32CDAB"`
+	Int32BE       int32   `json:"int32BE"`
+	Int32LE       int32   `json:"int32LE"`
+	Int32BADC     int32   `json:"int32BADC"`
+	Int32CDAB     int32   `json:"int32CDAB"`
+	Float32BE     string  `json:"float32BE"`
+	Float32LE     string  `json:"float32LE"`
+	Float32BADC   string  `json:"float32BADC"`
+	Float32CDAB   string  `json:"float32CDAB"`
+}
+
+// ModbusCombined64 represents a 64-bit value from four registers
+type ModbusCombined64 struct {
+	RegisterStart int     `json:"registerStart"`
+	Hex           string  `json:"hex"`
+	Uint64BE      uint64  `json:"uint64BE"`
+	Uint64LE      uint64  `json:"uint64LE"`
+	Int64BE       int64   `json:"int64BE"`
+	Int64LE       int64   `json:"int64LE"`
+	Float64BE     string  `json:"float64BE"`
+	Float64LE     string  `json:"float64LE"`
+}
+
+// ModbusResult holds the conversion results for Modbus registers
+type ModbusResult struct {
+	Registers   []ModbusRegister   `json:"registers"`
+	Combined32  []ModbusCombined32 `json:"combined32"`
+	Combined64  []ModbusCombined64 `json:"combined64"`
+	RawHex      string             `json:"rawHex"`
+	ASCII       string             `json:"ascii"`
 }
 
 // formatFloat converts float values to strings, handling NaN and Inf
@@ -688,4 +739,371 @@ func (a *App) ConvertBinary(binaryInput string) (*ConversionResult, error) {
 	}
 
 	return result, nil
+}
+
+// ConvertModbusRegisters converts an array of 16-bit register values
+// Input can be space/comma separated hex values (e.g., "1234 5678" or "0x1234, 0x5678")
+// or decimal values with 'd' prefix (e.g., "d1000 d2000")
+func (a *App) ConvertModbusRegisters(input string) (*ModbusResult, error) {
+	if input == "" {
+		return nil, fmt.Errorf("empty input")
+	}
+
+	// Parse the input into individual register values
+	registers, err := parseModbusInput(input)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(registers) == 0 {
+		return nil, fmt.Errorf("no valid register values found")
+	}
+
+	result := &ModbusResult{
+		Registers:  make([]ModbusRegister, len(registers)),
+		Combined32: make([]ModbusCombined32, 0),
+		Combined64: make([]ModbusCombined64, 0),
+	}
+
+	// Build raw hex and bytes for ASCII
+	var allBytes []byte
+	var hexParts []string
+
+	for i, val := range registers {
+		regHex := convert.Uint16ToHex(val)
+		hexParts = append(hexParts, regHex)
+
+		// Get bytes for ASCII
+		regBytes, _ := convert.HexToBytes(regHex)
+		allBytes = append(allBytes, regBytes...)
+
+		result.Registers[i] = ModbusRegister{
+			Index:    i + 1,
+			Hex:      regHex,
+			Unsigned: val,
+			Signed:   int16(val),
+			Binary:   convert.Uint16ToBinary(val),
+		}
+	}
+
+	result.RawHex = joinStrings(hexParts, " ")
+	result.ASCII = bytesToASCII(allBytes)
+
+	// Generate 32-bit combinations (overlapping pairs)
+	for i := 0; i <= len(registers)-2; i++ {
+		hexStr := convert.Uint16ToHex(registers[i]) + convert.Uint16ToHex(registers[i+1])
+
+		combined := ModbusCombined32{
+			RegisterStart: i + 1,
+			Hex:           hexStr,
+		}
+
+		// Unsigned integers
+		if v, err := convert.HexToUint32(hexStr); err == nil {
+			combined.Uint32BE = v
+		}
+		if v, err := convert.HexToUint32LE(hexStr); err == nil {
+			combined.Uint32LE = v
+		}
+		if v, err := convert.HexToUint32BADC(hexStr); err == nil {
+			combined.Uint32BADC = v
+		}
+		if v, err := convert.HexToUint32CDAB(hexStr); err == nil {
+			combined.Uint32CDAB = v
+		}
+
+		// Signed integers
+		if v, err := convert.HexToInt32(hexStr); err == nil {
+			combined.Int32BE = v
+		}
+		if v, err := convert.HexToInt32LE(hexStr); err == nil {
+			combined.Int32LE = v
+		}
+		if v, err := convert.HexToInt32BADC(hexStr); err == nil {
+			combined.Int32BADC = v
+		}
+		if v, err := convert.HexToInt32CDAB(hexStr); err == nil {
+			combined.Int32CDAB = v
+		}
+
+		// Floats
+		if v, err := convert.HexToFloat32(hexStr); err == nil {
+			combined.Float32BE = formatFloat32(v)
+		}
+		if v, err := convert.HexToFloat32LE(hexStr); err == nil {
+			combined.Float32LE = formatFloat32(v)
+		}
+		if v, err := convert.HexToFloat32BADC(hexStr); err == nil {
+			combined.Float32BADC = formatFloat32(v)
+		}
+		if v, err := convert.HexToFloat32CDAB(hexStr); err == nil {
+			combined.Float32CDAB = formatFloat32(v)
+		}
+
+		result.Combined32 = append(result.Combined32, combined)
+	}
+
+	// Generate 64-bit combinations (overlapping quads)
+	for i := 0; i <= len(registers)-4; i++ {
+		hexStr := convert.Uint16ToHex(registers[i]) +
+			convert.Uint16ToHex(registers[i+1]) +
+			convert.Uint16ToHex(registers[i+2]) +
+			convert.Uint16ToHex(registers[i+3])
+
+		combined := ModbusCombined64{
+			RegisterStart: i + 1,
+			Hex:           hexStr,
+		}
+
+		// Unsigned integers
+		if v, err := convert.HexToUint64(hexStr); err == nil {
+			combined.Uint64BE = v
+		}
+		if v, err := convert.HexToUint64LE(hexStr); err == nil {
+			combined.Uint64LE = v
+		}
+
+		// Signed integers
+		if v, err := convert.HexToInt64(hexStr); err == nil {
+			combined.Int64BE = v
+		}
+		if v, err := convert.HexToInt64LE(hexStr); err == nil {
+			combined.Int64LE = v
+		}
+
+		// Floats
+		if v, err := convert.HexToFloat64(hexStr); err == nil {
+			combined.Float64BE = formatFloat64(v)
+		}
+		if v, err := convert.HexToFloat64LE(hexStr); err == nil {
+			combined.Float64LE = formatFloat64(v)
+		}
+
+		result.Combined64 = append(result.Combined64, combined)
+	}
+
+	return result, nil
+}
+
+// parseModbusInput parses space/comma separated register values
+// Supports hex (0x1234, 1234) and decimal with 'd' prefix (d1000)
+func parseModbusInput(input string) ([]uint16, error) {
+	// Replace common separators with spaces
+	normalized := input
+	for _, sep := range []string{",", ";", "\t", "\n", ":"} {
+		normalized = replaceAll(normalized, sep, " ")
+	}
+
+	// Split by spaces
+	parts := splitAndTrim(normalized)
+
+	registers := make([]uint16, 0, len(parts))
+
+	for _, part := range parts {
+		if part == "" {
+			continue
+		}
+
+		var val uint64
+		var err error
+
+		// Check for decimal prefix
+		if len(part) > 1 && (part[0] == 'd' || part[0] == 'D') {
+			_, err = fmt.Sscanf(part[1:], "%d", &val)
+			if err != nil {
+				return nil, fmt.Errorf("invalid decimal value: %s", part)
+			}
+		} else {
+			// Try hex (with or without 0x prefix)
+			cleanHex := part
+			if len(part) > 2 && (part[:2] == "0x" || part[:2] == "0X") {
+				cleanHex = part[2:]
+			}
+			_, err = fmt.Sscanf(cleanHex, "%x", &val)
+			if err != nil {
+				return nil, fmt.Errorf("invalid hex value: %s", part)
+			}
+		}
+
+		if val > 0xFFFF {
+			return nil, fmt.Errorf("value exceeds 16-bit range: %s", part)
+		}
+
+		registers = append(registers, uint16(val))
+	}
+
+	return registers, nil
+}
+
+// Helper functions
+func replaceAll(s, old, new string) string {
+	result := ""
+	for i := 0; i < len(s); i++ {
+		found := false
+		if i+len(old) <= len(s) && s[i:i+len(old)] == old {
+			result += new
+			i += len(old) - 1
+			found = true
+		}
+		if !found {
+			result += string(s[i])
+		}
+	}
+	return result
+}
+
+func splitAndTrim(s string) []string {
+	var result []string
+	current := ""
+	for _, c := range s {
+		if c == ' ' {
+			if current != "" {
+				result = append(result, current)
+				current = ""
+			}
+		} else {
+			current += string(c)
+		}
+	}
+	if current != "" {
+		result = append(result, current)
+	}
+	return result
+}
+
+func joinStrings(parts []string, sep string) string {
+	if len(parts) == 0 {
+		return ""
+	}
+	result := parts[0]
+	for i := 1; i < len(parts); i++ {
+		result += sep + parts[i]
+	}
+	return result
+}
+
+func bytesToASCII(bytes []byte) string {
+	result := ""
+	for _, b := range bytes {
+		if b >= 32 && b <= 126 {
+			result += string(b)
+		} else {
+			result += "."
+		}
+	}
+	return result
+}
+
+// ConvertFloat performs conversions from decimal float input to hex and binary
+func (a *App) ConvertFloat(floatInput string, floatType string) (*ConversionResult, error) {
+	if floatInput == "" {
+		return nil, fmt.Errorf("empty input")
+	}
+
+	result := &ConversionResult{}
+
+	switch floatType {
+	case "float32":
+		var val float32
+		_, err := fmt.Sscanf(floatInput, "%f", &val)
+		if err != nil {
+			return nil, fmt.Errorf("invalid float32 value: %w", err)
+		}
+		hexStrBE := convert.Float32ToHex(val)
+		bytes, _ := convert.HexToBytes(hexStrBE)
+		result.Binary = convert.BytesToBinary(bytes)
+		result.Bytes = hexStrBE
+
+		// Set all float32 representations
+		formatted := formatFloat32(val)
+		result.Float32BE = &formatted
+		result.Float32BEHex = hexStrBE
+
+		// Populate other endianness formats
+		hexStrLE := convert.Float32ToHexLE(val)
+		if vLE, err := convert.HexToFloat32LE(hexStrLE); err == nil {
+			fmtLE := formatFloat32(vLE)
+			result.Float32LE = &fmtLE
+			result.Float32LEHex = hexStrLE
+		}
+		hexStrBADC := convert.Float32ToHexBADC(val)
+		if vBADC, err := convert.HexToFloat32BADC(hexStrBADC); err == nil {
+			fmtBADC := formatFloat32(vBADC)
+			result.Float32BADC = &fmtBADC
+			result.Float32BADCHex = hexStrBADC
+		}
+		hexStrCDAB := convert.Float32ToHexCDAB(val)
+		if vCDAB, err := convert.HexToFloat32CDAB(hexStrCDAB); err == nil {
+			fmtCDAB := formatFloat32(vCDAB)
+			result.Float32CDAB = &fmtCDAB
+			result.Float32CDABHex = hexStrCDAB
+		}
+
+		// Also show as integers (reinterpret bits)
+		if v, err := convert.HexToUint32(hexStrBE); err == nil {
+			result.Uint32BE = &v
+			result.Uint32BEHex = hexStrBE
+		}
+		if v, err := convert.HexToInt32(hexStrBE); err == nil {
+			result.Int32BE = &v
+			result.Int32BEHex = hexStrBE
+		}
+
+		return result, nil
+
+	case "float64":
+		var val float64
+		_, err := fmt.Sscanf(floatInput, "%lf", &val)
+		if err != nil {
+			// Try alternative parsing
+			_, err = fmt.Sscanf(floatInput, "%f", &val)
+			if err != nil {
+				return nil, fmt.Errorf("invalid float64 value: %w", err)
+			}
+		}
+		hexStrBE := convert.Float64ToHex(val)
+		bytes, _ := convert.HexToBytes(hexStrBE)
+		result.Binary = convert.BytesToBinary(bytes)
+		result.Bytes = hexStrBE
+
+		// Set all float64 representations
+		formatted := formatFloat64(val)
+		result.Float64BE = &formatted
+		result.Float64BEHex = hexStrBE
+
+		// Populate other endianness formats
+		hexStrLE := convert.Float64ToHexLE(val)
+		if vLE, err := convert.HexToFloat64LE(hexStrLE); err == nil {
+			fmtLE := formatFloat64(vLE)
+			result.Float64LE = &fmtLE
+			result.Float64LEHex = hexStrLE
+		}
+		hexStrBADC := convert.Float64ToHexBADC(val)
+		if vBADC, err := convert.HexToFloat64BADC(hexStrBADC); err == nil {
+			fmtBADC := formatFloat64(vBADC)
+			result.Float64BADC = &fmtBADC
+			result.Float64BADCHex = hexStrBADC
+		}
+		hexStrCDAB := convert.Float64ToHexCDAB(val)
+		if vCDAB, err := convert.HexToFloat64CDAB(hexStrCDAB); err == nil {
+			fmtCDAB := formatFloat64(vCDAB)
+			result.Float64CDAB = &fmtCDAB
+			result.Float64CDABHex = hexStrCDAB
+		}
+
+		// Also show as integers (reinterpret bits)
+		if v, err := convert.HexToUint64(hexStrBE); err == nil {
+			result.Uint64BE = &v
+			result.Uint64BEHex = hexStrBE
+		}
+		if v, err := convert.HexToInt64(hexStrBE); err == nil {
+			result.Int64BE = &v
+			result.Int64BEHex = hexStrBE
+		}
+
+		return result, nil
+
+	default:
+		return nil, fmt.Errorf("unsupported float type: %s", floatType)
+	}
 }

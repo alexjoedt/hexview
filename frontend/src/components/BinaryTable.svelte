@@ -4,6 +4,25 @@
 
   export let result;
   export let onCopy;
+  
+  // Convert hex bytes to ASCII representation (printable chars, '.' for non-printable)
+  function hexToAscii(hexStr) {
+    if (!hexStr) return null
+    // Remove spaces and other separators
+    const clean = hexStr.replace(/[\s:,]/g, '')
+    let ascii = ''
+    for (let i = 0; i < clean.length; i += 2) {
+      const byte = parseInt(clean.substr(i, 2), 16)
+      if (byte >= 32 && byte <= 126) {
+        ascii += String.fromCharCode(byte)
+      } else {
+        ascii += '.'
+      }
+    }
+    return ascii || null
+  }
+  
+  $: asciiValue = hexToAscii(result?.bytes)
 </script>
 
 <div class="table-wrapper">
@@ -35,6 +54,17 @@
           <span class="value-text">{formatValue(result?.binary)}</span>
           {#if hasValue(result?.binary)}
             <CopyButton value={result.binary} {onCopy} />
+          {/if}
+        </td>
+      </tr>
+      <tr class:unavailable={!hasValue(asciiValue)}>
+        <td class="type-cell">
+          <span class="type-badge ascii">ASCII</span>
+        </td>
+        <td class="value-cell-with-copy mono wide ascii-value">
+          <span class="value-text">{formatValue(asciiValue)}</span>
+          {#if hasValue(asciiValue)}
+            <CopyButton value={asciiValue} {onCopy} />
           {/if}
         </td>
       </tr>
@@ -165,5 +195,14 @@
   .type-badge.bytes {
     background: rgba(234, 88, 12, 0.12);
     color: var(--color-bytes);
+  }
+
+  .type-badge.ascii {
+    background: rgba(16, 185, 129, 0.12);
+    color: var(--color-int-unsigned);
+  }
+
+  .ascii-value {
+    letter-spacing: 1px;
   }
 </style>

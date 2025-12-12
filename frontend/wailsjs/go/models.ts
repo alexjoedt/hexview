@@ -71,6 +71,7 @@ export namespace main {
 	    float64CDABHex?: string;
 	    binary?: string;
 	    bytes?: string;
+	    ascii?: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new ConversionResult(source);
@@ -148,7 +149,130 @@ export namespace main {
 	        this.float64CDABHex = source["float64CDABHex"];
 	        this.binary = source["binary"];
 	        this.bytes = source["bytes"];
+	        this.ascii = source["ascii"];
 	    }
+	}
+	export class ModbusCombined32 {
+	    registerStart: number;
+	    hex: string;
+	    uint32BE: number;
+	    uint32LE: number;
+	    uint32BADC: number;
+	    uint32CDAB: number;
+	    int32BE: number;
+	    int32LE: number;
+	    int32BADC: number;
+	    int32CDAB: number;
+	    float32BE: string;
+	    float32LE: string;
+	    float32BADC: string;
+	    float32CDAB: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new ModbusCombined32(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.registerStart = source["registerStart"];
+	        this.hex = source["hex"];
+	        this.uint32BE = source["uint32BE"];
+	        this.uint32LE = source["uint32LE"];
+	        this.uint32BADC = source["uint32BADC"];
+	        this.uint32CDAB = source["uint32CDAB"];
+	        this.int32BE = source["int32BE"];
+	        this.int32LE = source["int32LE"];
+	        this.int32BADC = source["int32BADC"];
+	        this.int32CDAB = source["int32CDAB"];
+	        this.float32BE = source["float32BE"];
+	        this.float32LE = source["float32LE"];
+	        this.float32BADC = source["float32BADC"];
+	        this.float32CDAB = source["float32CDAB"];
+	    }
+	}
+	export class ModbusCombined64 {
+	    registerStart: number;
+	    hex: string;
+	    uint64BE: number;
+	    uint64LE: number;
+	    int64BE: number;
+	    int64LE: number;
+	    float64BE: string;
+	    float64LE: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new ModbusCombined64(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.registerStart = source["registerStart"];
+	        this.hex = source["hex"];
+	        this.uint64BE = source["uint64BE"];
+	        this.uint64LE = source["uint64LE"];
+	        this.int64BE = source["int64BE"];
+	        this.int64LE = source["int64LE"];
+	        this.float64BE = source["float64BE"];
+	        this.float64LE = source["float64LE"];
+	    }
+	}
+	export class ModbusRegister {
+	    index: number;
+	    hex: string;
+	    unsigned: number;
+	    signed: number;
+	    binary: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new ModbusRegister(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.index = source["index"];
+	        this.hex = source["hex"];
+	        this.unsigned = source["unsigned"];
+	        this.signed = source["signed"];
+	        this.binary = source["binary"];
+	    }
+	}
+	export class ModbusResult {
+	    registers: ModbusRegister[];
+	    combined32: ModbusCombined32[];
+	    combined64: ModbusCombined64[];
+	    rawHex: string;
+	    ascii: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new ModbusResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.registers = this.convertValues(source["registers"], ModbusRegister);
+	        this.combined32 = this.convertValues(source["combined32"], ModbusCombined32);
+	        this.combined64 = this.convertValues(source["combined64"], ModbusCombined64);
+	        this.rawHex = source["rawHex"];
+	        this.ascii = source["ascii"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
 	}
 
 }
