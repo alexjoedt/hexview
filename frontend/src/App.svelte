@@ -51,13 +51,13 @@
   async function copyToClipboard(text) {
     try {
       await navigator.clipboard.writeText(String(text))
-      toastMessage = 'Copied to clipboard!'
+      toastMessage = 'Copied!'
       showToast = true
-      setTimeout(() => showToast = false, 2000)
+      setTimeout(() => showToast = false, 1500)
     } catch (err) {
       toastMessage = 'Failed to copy'
       showToast = true
-      setTimeout(() => showToast = false, 2000)
+      setTimeout(() => showToast = false, 1500)
     }
   }
   
@@ -72,6 +72,16 @@
       event.preventDefault()
       clearInput()
     }
+  }
+  
+  // Helper to format value or show placeholder
+  function formatValue(value) {
+    return value !== null && value !== undefined ? String(value) : '—'
+  }
+  
+  // Check if value exists
+  function hasValue(value) {
+    return value !== null && value !== undefined
   }
 </script>
 
@@ -89,34 +99,23 @@
     
     <!-- Input Section -->
     <section class="input-section">
-      <label for="hex-input">Hexadecimal Input</label>
       <input
         id="hex-input"
         type="text"
         bind:value={hexInput}
-        placeholder="Enter hex (e.g., 0x1A2B, 1A 2B 3C, 1A:2B:3C)"
+        placeholder="Enter hex (e.g., 0xFF, 1A 2B 3C, 1A:2B:3C)"
         autocomplete="off"
         autofocus
         class:error={error}
       />
-      <div class="input-hint">
-        Accepts: 0x prefix, spaces, colons, commas • Case insensitive • <kbd>⌘K</kbd> to clear
-      </div>
       
       {#if error}
-        <div class="error-message">
-          ⚠️ {error}
-        </div>
+        <div class="error-message">⚠️ {error}</div>
       {/if}
       
       {#if !hexInput && !result}
         <div class="help-text">
-          <h3>Quick Start</h3>
-          <p>Enter a hexadecimal value to see all possible conversions.</p>
-          <div class="examples">
-            <strong>Examples:</strong>
-            <code>0xFF</code> <code>7F FF FF FF</code> <code>1A:2B:3C:4D</code>
-          </div>
+          Enter hex to convert • <kbd>⌘K</kbd> to clear
         </div>
       {/if}
     </section>
@@ -124,257 +123,201 @@
     <!-- Results Section -->
     {#if result && !error}
       <section class="results">
-        <div class="loading-indicator" class:visible={isLoading}>
-          Converting...
+        <!-- Integer Conversions Table -->
+        <div class="table-wrapper">
+          <h3 class="table-title">Integer Conversions</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Type</th>
+                <th>Big Endian</th>
+                <th>Little Endian</th>
+                <th class="copy-col"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- INT8 -->
+              <tr class:unavailable={!hasValue(result.int8BE)}>
+                <td class="type-cell"><span class="type-badge int-signed">INT8</span></td>
+                <td class="value-cell">{formatValue(result.int8BE)}</td>
+                <td class="value-cell na">—</td>
+                <td class="copy-cell">
+                  {#if hasValue(result.int8BE)}
+                    <button class="copy-btn" on:click={() => copyToClipboard(result.int8BE)} title="Copy">📋</button>
+                  {/if}
+                </td>
+              </tr>
+              
+              <!-- INT16 -->
+              <tr class:unavailable={!hasValue(result.int16BE) && !hasValue(result.int16LE)}>
+                <td class="type-cell"><span class="type-badge int-signed">INT16</span></td>
+                <td class="value-cell">{formatValue(result.int16BE)}</td>
+                <td class="value-cell">{formatValue(result.int16LE)}</td>
+                <td class="copy-cell">
+                  {#if hasValue(result.int16BE)}
+                    <button class="copy-btn" on:click={() => copyToClipboard(result.int16BE)} title="Copy BE">📋</button>
+                  {:else if hasValue(result.int16LE)}
+                    <button class="copy-btn" on:click={() => copyToClipboard(result.int16LE)} title="Copy LE">📋</button>
+                  {/if}
+                </td>
+              </tr>
+              
+              <!-- INT32 -->
+              <tr class:unavailable={!hasValue(result.int32BE) && !hasValue(result.int32LE)}>
+                <td class="type-cell"><span class="type-badge int-signed">INT32</span></td>
+                <td class="value-cell">{formatValue(result.int32BE)}</td>
+                <td class="value-cell">{formatValue(result.int32LE)}</td>
+                <td class="copy-cell">
+                  {#if hasValue(result.int32BE)}
+                    <button class="copy-btn" on:click={() => copyToClipboard(result.int32BE)} title="Copy BE">📋</button>
+                  {:else if hasValue(result.int32LE)}
+                    <button class="copy-btn" on:click={() => copyToClipboard(result.int32LE)} title="Copy LE">📋</button>
+                  {/if}
+                </td>
+              </tr>
+              
+              <!-- INT64 -->
+              <tr class:unavailable={!hasValue(result.int64BE) && !hasValue(result.int64LE)}>
+                <td class="type-cell"><span class="type-badge int-signed">INT64</span></td>
+                <td class="value-cell">{formatValue(result.int64BE)}</td>
+                <td class="value-cell">{formatValue(result.int64LE)}</td>
+                <td class="copy-cell">
+                  {#if hasValue(result.int64BE)}
+                    <button class="copy-btn" on:click={() => copyToClipboard(result.int64BE)} title="Copy BE">📋</button>
+                  {:else if hasValue(result.int64LE)}
+                    <button class="copy-btn" on:click={() => copyToClipboard(result.int64LE)} title="Copy LE">📋</button>
+                  {/if}
+                </td>
+              </tr>
+              
+              <!-- UINT8 -->
+              <tr class:unavailable={!hasValue(result.uint8BE)}>
+                <td class="type-cell"><span class="type-badge int-unsigned">UINT8</span></td>
+                <td class="value-cell">{formatValue(result.uint8BE)}</td>
+                <td class="value-cell na">—</td>
+                <td class="copy-cell">
+                  {#if hasValue(result.uint8BE)}
+                    <button class="copy-btn" on:click={() => copyToClipboard(result.uint8BE)} title="Copy">📋</button>
+                  {/if}
+                </td>
+              </tr>
+              
+              <!-- UINT16 -->
+              <tr class:unavailable={!hasValue(result.uint16BE) && !hasValue(result.uint16LE)}>
+                <td class="type-cell"><span class="type-badge int-unsigned">UINT16</span></td>
+                <td class="value-cell">{formatValue(result.uint16BE)}</td>
+                <td class="value-cell">{formatValue(result.uint16LE)}</td>
+                <td class="copy-cell">
+                  {#if hasValue(result.uint16BE)}
+                    <button class="copy-btn" on:click={() => copyToClipboard(result.uint16BE)} title="Copy BE">📋</button>
+                  {:else if hasValue(result.uint16LE)}
+                    <button class="copy-btn" on:click={() => copyToClipboard(result.uint16LE)} title="Copy LE">📋</button>
+                  {/if}
+                </td>
+              </tr>
+              
+              <!-- UINT32 -->
+              <tr class:unavailable={!hasValue(result.uint32BE) && !hasValue(result.uint32LE)}>
+                <td class="type-cell"><span class="type-badge int-unsigned">UINT32</span></td>
+                <td class="value-cell">{formatValue(result.uint32BE)}</td>
+                <td class="value-cell">{formatValue(result.uint32LE)}</td>
+                <td class="copy-cell">
+                  {#if hasValue(result.uint32BE)}
+                    <button class="copy-btn" on:click={() => copyToClipboard(result.uint32BE)} title="Copy BE">📋</button>
+                  {:else if hasValue(result.uint32LE)}
+                    <button class="copy-btn" on:click={() => copyToClipboard(result.uint32LE)} title="Copy LE">📋</button>
+                  {/if}
+                </td>
+              </tr>
+              
+              <!-- UINT64 -->
+              <tr class:unavailable={!hasValue(result.uint64BE) && !hasValue(result.uint64LE)}>
+                <td class="type-cell"><span class="type-badge int-unsigned">UINT64</span></td>
+                <td class="value-cell">{formatValue(result.uint64BE)}</td>
+                <td class="value-cell">{formatValue(result.uint64LE)}</td>
+                <td class="copy-cell">
+                  {#if hasValue(result.uint64BE)}
+                    <button class="copy-btn" on:click={() => copyToClipboard(result.uint64BE)} title="Copy BE">📋</button>
+                  {:else if hasValue(result.uint64LE)}
+                    <button class="copy-btn" on:click={() => copyToClipboard(result.uint64LE)} title="Copy LE">📋</button>
+                  {/if}
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
-        
-        <!-- Signed Integers - Big Endian -->
-        {#if result.int8BE !== null || result.int16BE !== null || result.int32BE !== null || result.int64BE !== null}
-          <div class="result-group signed-integers">
-            <h3 class="group-title">Signed Integers (Big Endian)</h3>
-            <div class="result-grid">
-              {#if result.int8BE !== null && result.int8BE !== undefined}
-                <div class="result-item">
-                  <span class="type-label int-signed">INT8</span>
-                  <span class="value">{result.int8BE}</span>
-                  <button class="copy-btn" on:click={() => copyToClipboard(result.int8BE)} title="Copy">
-                    📋
-                  </button>
-                </div>
-              {/if}
-              
-              {#if result.int16BE !== null && result.int16BE !== undefined}
-                <div class="result-item">
-                  <span class="type-label int-signed">INT16</span>
-                  <span class="value">{result.int16BE}</span>
-                  <button class="copy-btn" on:click={() => copyToClipboard(result.int16BE)} title="Copy">
-                    📋
-                  </button>
-                </div>
-              {/if}
-              
-              {#if result.int32BE !== null && result.int32BE !== undefined}
-                <div class="result-item">
-                  <span class="type-label int-signed">INT32</span>
-                  <span class="value">{result.int32BE}</span>
-                  <button class="copy-btn" on:click={() => copyToClipboard(result.int32BE)} title="Copy">
-                    📋
-                  </button>
-                </div>
-              {/if}
-              
-              {#if result.int64BE !== null && result.int64BE !== undefined}
-                <div class="result-item">
-                  <span class="type-label int-signed">INT64</span>
-                  <span class="value">{result.int64BE}</span>
-                  <button class="copy-btn" on:click={() => copyToClipboard(result.int64BE)} title="Copy">
-                    📋
-                  </button>
-                </div>
-              {/if}
-            </div>
-          </div>
-        {/if}
 
-        <!-- Signed Integers - Little Endian -->
-        {#if result.int16LE !== null || result.int32LE !== null || result.int64LE !== null}
-          <div class="result-group signed-integers">
-            <h3 class="group-title">Signed Integers (Little Endian)</h3>
-            <div class="result-grid">
-              {#if result.int16LE !== null && result.int16LE !== undefined}
-                <div class="result-item">
-                  <span class="type-label int-signed">INT16 LE</span>
-                  <span class="value">{result.int16LE}</span>
-                  <button class="copy-btn" on:click={() => copyToClipboard(result.int16LE)} title="Copy">
-                    📋
-                  </button>
-                </div>
-              {/if}
+        <!-- Floating Point Table -->
+        <div class="table-wrapper">
+          <h3 class="table-title">Floating Point</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Type</th>
+                <th>Big Endian</th>
+                <th>Little Endian</th>
+                <th class="copy-col"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- FLOAT32 -->
+              <tr class:unavailable={!hasValue(result.float32BE) && !hasValue(result.float32LE)}>
+                <td class="type-cell"><span class="type-badge float">FLOAT32</span></td>
+                <td class="value-cell">{formatValue(result.float32BE)}</td>
+                <td class="value-cell">{formatValue(result.float32LE)}</td>
+                <td class="copy-cell">
+                  {#if hasValue(result.float32BE)}
+                    <button class="copy-btn" on:click={() => copyToClipboard(result.float32BE)} title="Copy BE">📋</button>
+                  {:else if hasValue(result.float32LE)}
+                    <button class="copy-btn" on:click={() => copyToClipboard(result.float32LE)} title="Copy LE">📋</button>
+                  {/if}
+                </td>
+              </tr>
               
-              {#if result.int32LE !== null && result.int32LE !== undefined}
-                <div class="result-item">
-                  <span class="type-label int-signed">INT32 LE</span>
-                  <span class="value">{result.int32LE}</span>
-                  <button class="copy-btn" on:click={() => copyToClipboard(result.int32LE)} title="Copy">
-                    📋
-                  </button>
-                </div>
-              {/if}
-              
-              {#if result.int64LE !== null && result.int64LE !== undefined}
-                <div class="result-item">
-                  <span class="type-label int-signed">INT64 LE</span>
-                  <span class="value">{result.int64LE}</span>
-                  <button class="copy-btn" on:click={() => copyToClipboard(result.int64LE)} title="Copy">
-                    📋
-                  </button>
-                </div>
-              {/if}
-            </div>
-          </div>
-        {/if}
+              <!-- FLOAT64 -->
+              <tr class:unavailable={!hasValue(result.float64BE) && !hasValue(result.float64LE)}>
+                <td class="type-cell"><span class="type-badge float">FLOAT64</span></td>
+                <td class="value-cell">{formatValue(result.float64BE)}</td>
+                <td class="value-cell">{formatValue(result.float64LE)}</td>
+                <td class="copy-cell">
+                  {#if hasValue(result.float64BE)}
+                    <button class="copy-btn" on:click={() => copyToClipboard(result.float64BE)} title="Copy BE">📋</button>
+                  {:else if hasValue(result.float64LE)}
+                    <button class="copy-btn" on:click={() => copyToClipboard(result.float64LE)} title="Copy LE">📋</button>
+                  {/if}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
 
-        <!-- Unsigned Integers - Big Endian -->
-        {#if result.uint8BE !== null || result.uint16BE !== null || result.uint32BE !== null || result.uint64BE !== null}
-          <div class="result-group unsigned-integers">
-            <h3 class="group-title">Unsigned Integers (Big Endian)</h3>
-            <div class="result-grid">
-              {#if result.uint8BE !== null && result.uint8BE !== undefined}
-                <div class="result-item">
-                  <span class="type-label int-unsigned">UINT8</span>
-                  <span class="value">{result.uint8BE}</span>
-                  <button class="copy-btn" on:click={() => copyToClipboard(result.uint8BE)} title="Copy">
-                    📋
-                  </button>
-                </div>
-              {/if}
-              
-              {#if result.uint16BE !== null && result.uint16BE !== undefined}
-                <div class="result-item">
-                  <span class="type-label int-unsigned">UINT16</span>
-                  <span class="value">{result.uint16BE}</span>
-                  <button class="copy-btn" on:click={() => copyToClipboard(result.uint16BE)} title="Copy">
-                    📋
-                  </button>
-                </div>
-              {/if}
-              
-              {#if result.uint32BE !== null && result.uint32BE !== undefined}
-                <div class="result-item">
-                  <span class="type-label int-unsigned">UINT32</span>
-                  <span class="value">{result.uint32BE}</span>
-                  <button class="copy-btn" on:click={() => copyToClipboard(result.uint32BE)} title="Copy">
-                    📋
-                  </button>
-                </div>
-              {/if}
-              
-              {#if result.uint64BE !== null && result.uint64BE !== undefined}
-                <div class="result-item">
-                  <span class="type-label int-unsigned">UINT64</span>
-                  <span class="value">{result.uint64BE}</span>
-                  <button class="copy-btn" on:click={() => copyToClipboard(result.uint64BE)} title="Copy">
-                    📋
-                  </button>
-                </div>
-              {/if}
-            </div>
-          </div>
-        {/if}
-
-        <!-- Unsigned Integers - Little Endian -->
-        {#if result.uint16LE !== null || result.uint32LE !== null || result.uint64LE !== null}
-          <div class="result-group unsigned-integers">
-            <h3 class="group-title">Unsigned Integers (Little Endian)</h3>
-            <div class="result-grid">
-              {#if result.uint16LE !== null && result.uint16LE !== undefined}
-                <div class="result-item">
-                  <span class="type-label int-unsigned">UINT16 LE</span>
-                  <span class="value">{result.uint16LE}</span>
-                  <button class="copy-btn" on:click={() => copyToClipboard(result.uint16LE)} title="Copy">
-                    📋
-                  </button>
-                </div>
-              {/if}
-              
-              {#if result.uint32LE !== null && result.uint32LE !== undefined}
-                <div class="result-item">
-                  <span class="type-label int-unsigned">UINT32 LE</span>
-                  <span class="value">{result.uint32LE}</span>
-                  <button class="copy-btn" on:click={() => copyToClipboard(result.uint32LE)} title="Copy">
-                    📋
-                  </button>
-                </div>
-              {/if}
-              
-              {#if result.uint64LE !== null && result.uint64LE !== undefined}
-                <div class="result-item">
-                  <span class="type-label int-unsigned">UINT64 LE</span>
-                  <span class="value">{result.uint64LE}</span>
-                  <button class="copy-btn" on:click={() => copyToClipboard(result.uint64LE)} title="Copy">
-                    📋
-                  </button>
-                </div>
-              {/if}
-            </div>
-          </div>
-        {/if}
-
-        <!-- Floating Point Numbers -->
-        {#if result.float32BE !== null || result.float64BE !== null || result.float32LE !== null || result.float64LE !== null}
-          <div class="result-group float-numbers">
-            <h3 class="group-title">Floating Point</h3>
-            <div class="result-grid">
-              {#if result.float32BE !== null && result.float32BE !== undefined}
-                <div class="result-item">
-                  <span class="type-label float">FLOAT32 BE</span>
-                  <span class="value">{result.float32BE}</span>
-                  <button class="copy-btn" on:click={() => copyToClipboard(result.float32BE)} title="Copy">
-                    📋
-                  </button>
-                </div>
-              {/if}
-              
-              {#if result.float64BE !== null && result.float64BE !== undefined}
-                <div class="result-item">
-                  <span class="type-label float">FLOAT64 BE</span>
-                  <span class="value">{result.float64BE}</span>
-                  <button class="copy-btn" on:click={() => copyToClipboard(result.float64BE)} title="Copy">
-                    📋
-                  </button>
-                </div>
-              {/if}
-              
-              {#if result.float32LE !== null && result.float32LE !== undefined}
-                <div class="result-item">
-                  <span class="type-label float">FLOAT32 LE</span>
-                  <span class="value">{result.float32LE}</span>
-                  <button class="copy-btn" on:click={() => copyToClipboard(result.float32LE)} title="Copy">
-                    📋
-                  </button>
-                </div>
-              {/if}
-              
-              {#if result.float64LE !== null && result.float64LE !== undefined}
-                <div class="result-item">
-                  <span class="type-label float">FLOAT64 LE</span>
-                  <span class="value">{result.float64LE}</span>
-                  <button class="copy-btn" on:click={() => copyToClipboard(result.float64LE)} title="Copy">
-                    📋
-                  </button>
-                </div>
-              {/if}
-            </div>
-          </div>
-        {/if}
-
-        <!-- Binary & Byte Representations -->
-        {#if result.binary || result.bytes}
-          <div class="result-group binary-group">
-            <h3 class="group-title">Binary Representations</h3>
-            <div class="result-grid">
+        <!-- Binary Representations -->
+        <div class="table-wrapper">
+          <h3 class="table-title">Binary Representations</h3>
+          <table>
+            <tbody>
               {#if result.bytes}
-                <div class="result-item full-width">
-                  <span class="type-label bytes">HEX BYTES</span>
-                  <span class="value mono">{result.bytes}</span>
-                  <button class="copy-btn" on:click={() => copyToClipboard(result.bytes)} title="Copy">
-                    📋
-                  </button>
-                </div>
+                <tr>
+                  <td class="type-cell"><span class="type-badge bytes">HEX</span></td>
+                  <td class="value-cell mono wide">{result.bytes}</td>
+                  <td class="copy-cell">
+                    <button class="copy-btn" on:click={() => copyToClipboard(result.bytes)} title="Copy">📋</button>
+                  </td>
+                </tr>
               {/if}
               
               {#if result.binary}
-                <div class="result-item full-width">
-                  <span class="type-label binary">BINARY</span>
-                  <span class="value mono">{result.binary}</span>
-                  <button class="copy-btn" on:click={() => copyToClipboard(result.binary)} title="Copy">
-                    📋
-                  </button>
-                </div>
+                <tr>
+                  <td class="type-cell"><span class="type-badge binary">BIN</span></td>
+                  <td class="value-cell mono wide">{result.binary}</td>
+                  <td class="copy-cell">
+                    <button class="copy-btn" on:click={() => copyToClipboard(result.binary)} title="Copy">📋</button>
+                  </td>
+                </tr>
               {/if}
-            </div>
-          </div>
-        {/if}
+            </tbody>
+          </table>
+        </div>
       </section>
     {/if}
   </div>
@@ -389,13 +332,14 @@
   :root {
     /* Light Theme Colors */
     --bg-primary: #ffffff;
-    --bg-secondary: #f5f5f5;
-    --bg-tertiary: #e8e8e8;
+    --bg-secondary: #f8f9fa;
+    --bg-tertiary: #e9ecef;
+    --bg-hover: #f1f3f5;
     --text-primary: #1a1a1a;
     --text-secondary: #666666;
     --text-tertiary: #999999;
-    --border-color: #d0d0d0;
-    --shadow: rgba(0, 0, 0, 0.1);
+    --border-color: #dee2e6;
+    --shadow: rgba(0, 0, 0, 0.05);
     
     /* Type Colors - Light */
     --color-int-signed: #2563eb;
@@ -407,19 +351,16 @@
     /* Status Colors */
     --color-error: #ef4444;
     --color-success: #10b981;
-    --color-warning: #f59e0b;
     
-    /* Spacing */
+    /* Spacing - Compact */
     --spacing-xs: 0.25rem;
     --spacing-sm: 0.5rem;
-    --spacing-md: 1rem;
-    --spacing-lg: 1.5rem;
-    --spacing-xl: 2rem;
+    --spacing-md: 0.75rem;
+    --spacing-lg: 1rem;
     
     /* Border Radius */
     --radius-sm: 0.25rem;
-    --radius-md: 0.5rem;
-    --radius-lg: 0.75rem;
+    --radius-md: 0.375rem;
     
     /* Typography */
     --font-mono: 'SF Mono', 'Monaco', 'Consolas', monospace;
@@ -429,13 +370,14 @@
   /* Dark Theme */
   .dark {
     --bg-primary: #1a1a1a;
-    --bg-secondary: #2a2a2a;
-    --bg-tertiary: #3a3a3a;
+    --bg-secondary: #242424;
+    --bg-tertiary: #2e2e2e;
+    --bg-hover: #333333;
     --text-primary: #f0f0f0;
     --text-secondary: #b0b0b0;
-    --text-tertiary: #808080;
-    --border-color: #404040;
-    --shadow: rgba(0, 0, 0, 0.4);
+    --text-tertiary: #707070;
+    --border-color: #3a3a3a;
+    --shadow: rgba(0, 0, 0, 0.3);
     
     /* Type Colors - Dark */
     --color-int-signed: #60a5fa;
@@ -458,12 +400,14 @@
     color: var(--text-primary);
     font-family: var(--font-sans);
     transition: background 0.3s, color 0.3s;
+    font-size: 13px;
   }
   
   .container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: var(--spacing-xl);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding: var(--spacing-md);
   }
 
   /* Header */
@@ -471,338 +415,274 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: var(--spacing-xl);
-    padding-bottom: var(--spacing-lg);
-    border-bottom: 2px solid var(--border-color);
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-md);
+    border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0;
   }
 
   h1 {
-    font-size: 2rem;
+    font-size: 1.25rem;
     font-weight: 600;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.01em;
   }
 
   .theme-toggle {
-    background: var(--bg-secondary);
+    background: transparent;
     border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
-    padding: var(--spacing-sm) var(--spacing-md);
-    font-size: 1.25rem;
+    border-radius: var(--radius-sm);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-size: 1rem;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.15s;
   }
 
   .theme-toggle:hover {
-    background: var(--bg-tertiary);
-    transform: scale(1.05);
+    background: var(--bg-hover);
   }
 
   /* Input Section */
   .input-section {
-    margin-bottom: var(--spacing-xl);
-  }
-
-  .input-section label {
-    display: block;
-    font-weight: 600;
-    font-size: 0.875rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--text-secondary);
-    margin-bottom: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+    flex-shrink: 0;
   }
 
   .input-section input {
     width: 100%;
-    padding: var(--spacing-md);
-    font-size: 1.125rem;
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: 13px;
     font-family: var(--font-mono);
     background: var(--bg-secondary);
-    border: 2px solid var(--border-color);
+    border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
     color: var(--text-primary);
-    transition: all 0.2s;
+    transition: all 0.15s;
   }
 
   .input-section input:focus {
     outline: none;
     border-color: var(--color-int-signed);
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    background: var(--bg-primary);
   }
 
   .input-section input.error {
     border-color: var(--color-error);
   }
 
-  .input-hint {
-    margin-top: var(--spacing-sm);
-    font-size: 0.75rem;
-    color: var(--text-tertiary);
-    font-style: italic;
-  }
-  
-  .input-hint kbd {
-    background: var(--bg-tertiary);
-    padding: 0.1rem 0.3rem;
-    border-radius: var(--radius-sm);
-    font-family: var(--font-sans);
-    font-size: 0.7rem;
-    font-style: normal;
-  }
-
   .error-message {
-    margin-top: var(--spacing-md);
-    padding: var(--spacing-md);
+    margin-top: var(--spacing-sm);
+    padding: var(--spacing-sm);
     background: rgba(239, 68, 68, 0.1);
-    border-left: 4px solid var(--color-error);
+    border-left: 3px solid var(--color-error);
     border-radius: var(--radius-sm);
     color: var(--color-error);
-    font-size: 0.875rem;
+    font-size: 12px;
   }
 
   /* Help Text */
   .help-text {
-    margin-top: var(--spacing-xl);
-    padding: var(--spacing-lg);
-    background: var(--bg-secondary);
-    border-radius: var(--radius-lg);
-    border: 1px dashed var(--border-color);
+    margin-top: var(--spacing-sm);
+    padding: var(--spacing-sm);
+    text-align: center;
+    color: var(--text-tertiary);
+    font-size: 11px;
   }
-
-  .help-text h3 {
-    font-size: 1.25rem;
-    margin-bottom: var(--spacing-md);
-  }
-
-  .help-text p {
-    color: var(--text-secondary);
-    margin-bottom: var(--spacing-md);
-  }
-
-  .examples {
-    display: flex;
-    gap: var(--spacing-sm);
-    flex-wrap: wrap;
-    align-items: center;
-  }
-
-  .examples strong {
-    color: var(--text-secondary);
-    font-size: 0.875rem;
-  }
-
-  .examples code {
-    padding: var(--spacing-xs) var(--spacing-sm);
+  
+  .help-text kbd {
     background: var(--bg-tertiary);
+    padding: 0.1rem 0.3rem;
     border-radius: var(--radius-sm);
     font-family: var(--font-mono);
-    font-size: 0.875rem;
-    color: var(--color-int-signed);
-  }
-
-  /* Loading Indicator */
-  .loading-indicator {
-    opacity: 0;
-    transition: opacity 0.2s;
-    font-size: 0.875rem;
-    color: var(--text-tertiary);
-    margin-bottom: var(--spacing-md);
-  }
-
-  .loading-indicator.visible {
-    opacity: 1;
+    font-size: 10px;
   }
 
   /* Results Section */
   .results {
+    flex: 1;
+    overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-lg);
+    gap: var(--spacing-md);
   }
 
-  .result-group {
-    background: var(--bg-secondary);
-    border-radius: var(--radius-lg);
-    padding: var(--spacing-lg);
+  /* Table Wrapper */
+  .table-wrapper {
     border: 1px solid var(--border-color);
-    animation: fadeIn 0.3s ease-out;
+    border-radius: var(--radius-md);
+    overflow: hidden;
   }
 
-  .group-title {
-    font-size: 1rem;
+  .table-title {
+    font-size: 11px;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.05em;
     color: var(--text-secondary);
-    margin-bottom: var(--spacing-md);
-    padding-bottom: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--bg-secondary);
     border-bottom: 1px solid var(--border-color);
   }
 
-  .result-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: var(--spacing-md);
+  /* Table Styles */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
   }
 
-  .result-item {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-sm);
-    padding: var(--spacing-md);
+  thead {
+    background: var(--bg-secondary);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  th {
+    text-align: left;
+    font-weight: 600;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--text-secondary);
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  th.copy-col {
+    width: 40px;
+    padding: var(--spacing-sm) var(--spacing-sm);
+  }
+
+  tbody tr {
     background: var(--bg-primary);
-    border-radius: var(--radius-md);
-    border: 1px solid var(--border-color);
+    transition: background 0.1s;
   }
 
-  .result-item.full-width {
-    grid-column: 1 / -1;
+  tbody tr:hover {
+    background: var(--bg-hover);
   }
 
-  .type-label {
-    flex-shrink: 0;
-    padding: var(--spacing-xs) var(--spacing-sm);
+  tbody tr.unavailable {
+    opacity: 0.4;
+  }
+
+  tbody tr:not(:last-child) td {
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  td {
+    padding: var(--spacing-sm) var(--spacing-md);
+  }
+
+  .type-cell {
+    width: 90px;
+  }
+
+  .value-cell {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-primary);
+  }
+
+  .value-cell.na {
+    color: var(--text-tertiary);
+    text-align: center;
+  }
+
+  .value-cell.mono {
+    font-size: 11px;
+  }
+
+  .value-cell.wide {
+    max-width: 0;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  .copy-cell {
+    width: 40px;
+    padding: var(--spacing-sm) var(--spacing-sm);
+    text-align: center;
+  }
+
+  /* Type Badges */
+  .type-badge {
+    display: inline-block;
+    padding: 2px 6px;
     border-radius: var(--radius-sm);
-    font-size: 0.75rem;
+    font-size: 10px;
     font-weight: 700;
     font-family: var(--font-mono);
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.03em;
   }
 
-  .type-label.int-signed {
-    background: rgba(37, 99, 235, 0.15);
+  .type-badge.int-signed {
+    background: rgba(37, 99, 235, 0.12);
     color: var(--color-int-signed);
   }
 
-  .type-label.int-unsigned {
-    background: rgba(5, 150, 105, 0.15);
+  .type-badge.int-unsigned {
+    background: rgba(5, 150, 105, 0.12);
     color: var(--color-int-unsigned);
   }
 
-  .type-label.float {
-    background: rgba(220, 38, 38, 0.15);
+  .type-badge.float {
+    background: rgba(220, 38, 38, 0.12);
     color: var(--color-float);
   }
 
-  .type-label.binary {
-    background: rgba(124, 58, 237, 0.15);
+  .type-badge.binary {
+    background: rgba(124, 58, 237, 0.12);
     color: var(--color-binary);
   }
 
-  .type-label.bytes {
-    background: rgba(234, 88, 12, 0.15);
+  .type-badge.bytes {
+    background: rgba(234, 88, 12, 0.12);
     color: var(--color-bytes);
   }
 
-  .value {
-    flex: 1;
-    font-size: 1rem;
-    font-weight: 500;
-    color: var(--text-primary);
-    word-break: break-all;
-  }
-
-  .value.mono {
-    font-family: var(--font-mono);
-    font-size: 0.875rem;
-  }
-
+  /* Copy Button */
   .copy-btn {
-    flex-shrink: 0;
     background: transparent;
     border: none;
-    padding: var(--spacing-xs);
+    padding: 2px;
     cursor: pointer;
-    font-size: 1rem;
-    opacity: 0.5;
-    transition: opacity 0.2s, transform 0.2s;
+    font-size: 14px;
+    opacity: 0.4;
+    transition: opacity 0.15s, transform 0.15s;
   }
 
   .copy-btn:hover {
     opacity: 1;
-    transform: scale(1.1);
+    transform: scale(1.15);
   }
 
   .copy-btn:active {
-    transform: scale(0.95);
+    transform: scale(0.9);
   }
 
   /* Toast */
   .toast {
     position: fixed;
-    bottom: var(--spacing-xl);
+    bottom: var(--spacing-lg);
     left: 50%;
     transform: translateX(-50%);
     background: var(--bg-tertiary);
     color: var(--text-primary);
     padding: var(--spacing-sm) var(--spacing-lg);
     border-radius: var(--radius-md);
-    box-shadow: 0 4px 12px var(--shadow);
-    animation: slideUp 0.3s ease-out;
+    box-shadow: 0 2px 8px var(--shadow);
+    animation: slideUp 0.2s ease-out;
     z-index: 1000;
-  }
-
-  /* Responsive Design */
-  @media (max-width: 768px) {
-    .container {
-      padding: var(--spacing-md);
-    }
-    
-    h1 {
-      font-size: 1.5rem;
-    }
-    
-    .result-grid {
-      grid-template-columns: 1fr;
-    }
-    
-    .input-section input {
-      font-size: 1rem;
-    }
-    
-    .theme-toggle {
-      font-size: 1rem;
-    }
-  }
-
-  @media (max-width: 480px) {
-    .container {
-      padding: var(--spacing-sm);
-    }
-    
-    header {
-      flex-direction: column;
-      gap: var(--spacing-md);
-      align-items: flex-start;
-    }
-    
-    .theme-toggle {
-      align-self: flex-end;
-    }
-    
-    .examples {
-      flex-direction: column;
-      align-items: flex-start;
-    }
+    font-size: 12px;
   }
 
   /* Animations */
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(-10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
   @keyframes slideUp {
     from {
       opacity: 0;
-      transform: translateX(-50%) translateY(20px);
+      transform: translateX(-50%) translateY(10px);
     }
     to {
       opacity: 1;
@@ -811,26 +691,38 @@
   }
 
   /* Scrollbar Styling */
-  ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+  .results::-webkit-scrollbar {
+    width: 6px;
   }
 
-  ::-webkit-scrollbar-track {
+  .results::-webkit-scrollbar-track {
     background: var(--bg-secondary);
   }
 
-  ::-webkit-scrollbar-thumb {
+  .results::-webkit-scrollbar-thumb {
     background: var(--border-color);
-    border-radius: var(--radius-sm);
+    border-radius: 3px;
   }
 
-  ::-webkit-scrollbar-thumb:hover {
+  .results::-webkit-scrollbar-thumb:hover {
     background: var(--text-tertiary);
+  }
+
+  .value-cell.wide::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  .value-cell.wide::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .value-cell.wide::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 2px;
   }
 
   /* Selection */
   ::selection {
-    background: rgba(37, 99, 235, 0.3);
+    background: rgba(37, 99, 235, 0.25);
   }
 </style>

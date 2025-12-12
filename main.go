@@ -17,9 +17,11 @@ func main() {
 
 	// Create application with options
 	err := wails.Run(&options.App{
-		Title:  "hexview",
-		Width:  1024,
-		Height: 768,
+		Title:     "hexview",
+		Width:     600,
+		Height:    700,
+		MinWidth:  500,
+		MinHeight: 600,
 		AssetServer: &assetserver.Options{
 			Assets: assets,
 		},
