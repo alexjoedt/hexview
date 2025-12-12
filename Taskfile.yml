@@ -2,28 +2,131 @@ version: '3'
 
 vars:
   BINARY: hexview
+  BUILD_DIR: build/bin
 
 tasks:
+  # =============================================================================
+  # Development Tasks
+  # =============================================================================
+  
+  dev:
+    desc: "Run Wails in development mode with hot reload"
+    cmds:
+      - wails dev
+
+  doctor:
+    desc: "Check Wails development environment and dependencies"
+    cmds:
+      - wails doctor
+
+  # =============================================================================
+  # Code Quality Tasks
+  # =============================================================================
+  
   tidy:
+    desc: "Format Go code and tidy dependencies"
     cmds:
       - go fmt ./...
       - go mod tidy
 
   test:
+    desc: "Run Go tests with coverage"
     cmds:
       - go test --cover ./...
       - go mod verify
 
+  # =============================================================================
+  # Build Tasks - Current Platform
+  # =============================================================================
+  
   build:
+    desc: "Build Wails app for current platform (dev build)"
     cmds:
-      - go mod verify
-      - go build -o bin/{{.BINARY}} .
+      - wails build
 
-  run:
+  build:prod:
+    desc: "Build optimized production binary (stripped debug symbols)"
     cmds:
-      - task: build
-      - ./bin/{{.BINARY}}
+      - wails build -clean -ldflags "-w -s"
 
+  # =============================================================================
+  # Build Tasks - Cross-Platform
+  # NOTE: Cross-compilation from macOS only supports darwin targets natively.
+  # Windows/Linux builds require running on native platforms or CI/CD.
+  # =============================================================================
+  
+  build:mac:
+    desc: "Build universal macOS binary (Intel + Apple Silicon)"
+    cmds:
+      - wails build -platform darwin/universal -ldflags "-w -s"
+
+  build:mac:intel:
+    desc: "Build macOS binary for Intel processors"
+    cmds:
+      - wails build -platform darwin/amd64 -ldflags "-w -s"
+
+  build:mac:arm:
+    desc: "Build macOS binary for Apple Silicon"
+    cmds:
+      - wails build -platform darwin/arm64 -ldflags "-w -s"
+
+  build:windows:
+    desc: "Build Windows executable (requires Windows or CI/CD)"
+    cmds:
+      - wails build -platform windows/amd64 -ldflags "-w -s"
+
+  build:windows:installer:
+    desc: "Build Windows executable with NSIS installer (requires NSIS)"
+    cmds:
+      - wails build -platform windows/amd64 -nsis -ldflags "-w -s"
+
+  build:linux:
+    desc: "Build Linux binary (requires Linux or CI/CD)"
+    cmds:
+      - wails build -platform linux/amd64 -ldflags "-w -s"
+
+  build:all:
+    desc: "Build for all major platforms (use in CI/CD pipeline)"
+    cmds:
+      - task: build:mac
+      - task: build:windows
+      - task: build:linux
+
+  # =============================================================================
+  # Utility Tasks
+  # =============================================================================
+  
   clean:
+    desc: "Remove build artifacts"
     cmds:
-      - rm -rf bin
+      - rm -rf {{.BUILD_DIR}}
+      - rm -rf frontend/dist
+      - rm -rf frontend/node_modules/.vite
+
+  clean:all:
+    desc: "Remove all generated files including node_modules"
+    cmds:
+      - task: clean
+      - rm -rf frontend/node_modules
+
+  install:
+    desc: "Install frontend dependencies"
+    dir: frontend
+    cmds:
+      - npm install
+
+  # =============================================================================
+  # CI/CD Tasks
+  # =============================================================================
+  
+  ci:test:
+    desc: "Run all tests for CI pipeline"
+    cmds:
+      - task: tidy
+      - task: test
+
+  ci:build:
+    desc: "Build optimized binary for current platform (CI)"
+    cmds:
+      - task: ci:test
+      - task: build:prod
