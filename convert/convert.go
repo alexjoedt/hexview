@@ -201,8 +201,22 @@ func hexToInt[T integer](hexStr string, byteSize int, endian binary.ByteOrder) (
 		return 0, err
 	}
 
-	if len(bytes) != byteSize {
+	// Reject overflow: input has more bytes than target type can hold
+	if len(bytes) > byteSize {
 		return 0, fmt.Errorf("%w: expected %d bytes, got %d", ErrInvalidLength, byteSize, len(bytes))
+	}
+
+	// Auto-pad with leading zeros for big-endian or trailing zeros for little-endian
+	if len(bytes) < byteSize {
+		if endian == binary.BigEndian {
+			// Prepend zeros (big-endian: MSB first)
+			padding := make([]byte, byteSize-len(bytes))
+			bytes = append(padding, bytes...)
+		} else {
+			// Append zeros (little-endian: LSB first)
+			padding := make([]byte, byteSize-len(bytes))
+			bytes = append(bytes, padding...)
+		}
 	}
 
 	var result T
@@ -341,8 +355,15 @@ func hexToIntBADC[T integer](hexStr string, byteSize int) (T, error) {
 		return 0, err
 	}
 
-	if len(bytes) != byteSize {
+	// Reject overflow: input has more bytes than target type can hold
+	if len(bytes) > byteSize {
 		return 0, fmt.Errorf("%w: expected %d bytes, got %d", ErrInvalidLength, byteSize, len(bytes))
+	}
+
+	// Auto-pad with leading zeros (big-endian style before BADC swap)
+	if len(bytes) < byteSize {
+		padding := make([]byte, byteSize-len(bytes))
+		bytes = append(padding, bytes...)
 	}
 
 	// Convert to big-endian first, then swap to BADC
@@ -370,8 +391,15 @@ func hexToIntCDAB[T integer](hexStr string, byteSize int) (T, error) {
 		return 0, err
 	}
 
-	if len(bytes) != byteSize {
+	// Reject overflow: input has more bytes than target type can hold
+	if len(bytes) > byteSize {
 		return 0, fmt.Errorf("%w: expected %d bytes, got %d", ErrInvalidLength, byteSize, len(bytes))
+	}
+
+	// Auto-pad with trailing zeros (little-endian style before CDAB swap)
+	if len(bytes) < byteSize {
+		padding := make([]byte, byteSize-len(bytes))
+		bytes = append(bytes, padding...)
 	}
 
 	// Convert to big-endian first, then swap to CDAB

@@ -57,7 +57,7 @@ func TestHexToInt8(t *testing.T) {
 		{"negative min", "80", -128, false},
 		{"zero", "00", 0, false},
 		{"with prefix", "0x7f", 127, false},
-		{"wrong length", "1234", 0, true},
+		{"overflow - too many bytes", "1234", 0, true},
 	}
 
 	for _, tt := range tests {
@@ -85,7 +85,8 @@ func TestHexToInt16(t *testing.T) {
 		{"negative", "ffff", -1, false},
 		{"negative min", "8000", -32768, false},
 		{"zero", "0000", 0, false},
-		{"wrong length", "12", 0, true},
+		{"auto-pad 1 byte", "12", 0x0012, false},
+		{"auto-pad 1 byte max", "ff", 0x00ff, false},
 	}
 
 	for _, tt := range tests {
@@ -139,7 +140,10 @@ func TestHexToInt32(t *testing.T) {
 		{"negative", "ffffffff", -1, false},
 		{"negative min", "80000000", -2147483648, false},
 		{"zero", "00000000", 0, false},
-		{"wrong length", "12345", 0, true},
+		{"auto-pad 3 bytes", "2a 22 2b", 0x002a222b, false},
+		{"auto-pad 1 byte", "ff", 0x000000ff, false},
+		{"auto-pad 2 bytes", "1234", 0x00001234, false},
+		{"overflow - too many bytes", "1234567890", 0, true},
 	}
 
 	for _, tt := range tests {
@@ -167,7 +171,10 @@ func TestHexToInt64(t *testing.T) {
 		{"negative", "ffffffffffffffff", -1, false},
 		{"negative min", "8000000000000000", -9223372036854775808, false},
 		{"zero", "0000000000000000", 0, false},
-		{"wrong length", "12345678", 0, true},
+		{"auto-pad 4 bytes", "12345678", 0x0000000012345678, false},
+		{"auto-pad 5 bytes", "1234567890", 0x0000001234567890, false},
+		{"auto-pad 1 byte", "ff", 0x00000000000000ff, false},
+		{"overflow - too many bytes", "12345678901234567890", 0, true},
 	}
 
 	for _, tt := range tests {
@@ -238,7 +245,7 @@ func TestHexToUint8(t *testing.T) {
 		{"max", "ff", 255, false},
 		{"zero", "00", 0, false},
 		{"mid", "7f", 127, false},
-		{"wrong length", "1234", 0, true},
+		{"overflow - too many bytes", "1234", 0, true},
 	}
 
 	for _, tt := range tests {
@@ -265,6 +272,7 @@ func TestHexToUint16(t *testing.T) {
 		{"max", "ffff", 65535, false},
 		{"zero", "0000", 0, false},
 		{"mid", "7fff", 32767, false},
+		{"auto-pad 1 byte", "ff", 0x00ff, false},
 	}
 
 	for _, tt := range tests {
@@ -291,6 +299,8 @@ func TestHexToUint32(t *testing.T) {
 		{"max", "ffffffff", 4294967295, false},
 		{"zero", "00000000", 0, false},
 		{"mid", "7fffffff", 2147483647, false},
+		{"auto-pad 3 bytes", "2a222b", 0x002a222b, false},
+		{"auto-pad 1 byte", "ff", 0x000000ff, false},
 	}
 
 	for _, tt := range tests {
@@ -317,6 +327,8 @@ func TestHexToUint64(t *testing.T) {
 		{"max", "ffffffffffffffff", 18446744073709551615, false},
 		{"zero", "0000000000000000", 0, false},
 		{"mid", "7fffffffffffffff", 9223372036854775807, false},
+		{"auto-pad 5 bytes", "1234567890", 0x0000001234567890, false},
+		{"auto-pad 1 byte", "ff", 0x00000000000000ff, false},
 	}
 
 	for _, tt := range tests {
@@ -391,7 +403,8 @@ func TestHexToFloat32(t *testing.T) {
 		{"NaN", "7fc00000", 0, false, true, false, 0},
 		{"positive infinity", "7f800000", 0, false, false, true, 1},
 		{"negative infinity", "ff800000", 0, false, false, true, -1},
-		{"wrong length", "123", 0, true, false, false, 0},
+		{"auto-pad 3 bytes", "800000", 0.0, false, false, false, 0},
+		{"overflow - too many bytes", "1234567890", 0, true, false, false, 0},
 	}
 
 	for _, tt := range tests {
@@ -439,7 +452,8 @@ func TestHexToFloat64(t *testing.T) {
 		{"negative one", "bff0000000000000", -1.0, false},
 		{"pi", "400921fb54442d18", 3.141592653589793, false},
 		{"large number", "40f86a0000000000", 100000.0, false},
-		{"wrong length", "1234", 0, true},
+		{"auto-pad 4 bytes", "00000000", 0.0, false},
+		{"overflow - too many bytes", "12345678901234567890", 0, true},
 	}
 
 	for _, tt := range tests {
@@ -522,7 +536,7 @@ func TestBinaryToInt8(t *testing.T) {
 		{"negative min", "10000000", -128, false},
 		{"zero", "00000000", 0, false},
 		{"with spaces", "0111 1111", 127, false},
-		{"wrong length", "111111111111111111", 0, true},
+		{"overflow - too many bits", "111111111111111111", 0, true},
 	}
 
 	for _, tt := range tests {

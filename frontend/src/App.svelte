@@ -13,6 +13,9 @@
   // Theme state (default to system preference)
   let darkMode = window.matchMedia('(prefers-color-scheme: dark)').matches
   
+  // Expert mode state
+  let expertMode = false
+  
   // Toast state
   let toastMessage = ''
   let showToast = false
@@ -108,9 +111,15 @@
     <!-- Header -->
     <header>
       <h1>Hexview</h1>
-      <button class="theme-toggle" on:click={toggleTheme} aria-label="Toggle theme">
-        {darkMode ? '☀️' : '🌙'}
-      </button>
+      <div class="header-controls">
+        <label class="expert-mode-toggle">
+          <input type="checkbox" bind:checked={expertMode} />
+          <span class="checkbox-label">Expert Mode</span>
+        </label>
+        <button class="theme-toggle" on:click={toggleTheme} aria-label="Toggle theme">
+          {darkMode ? '☀️' : '🌙'}
+        </button>
+      </div>
     </header>
     
     <!-- Input Section -->
@@ -185,9 +194,13 @@
               <tr>
                 <th>Type</th>
                 <th>Big Endian</th>
+                {#if expertMode}<th>Hex (BE)</th>{/if}
                 <th>Little Endian</th>
+                {#if expertMode}<th>Hex (LE)</th>{/if}
                 <th>Mid-Big (BADC)</th>
+                {#if expertMode}<th>Hex (BADC)</th>{/if}
                 <th>Mid-Little (CDAB)</th>
+                {#if expertMode}<th>Hex (CDAB)</th>{/if}
               </tr>
             </thead>
             <tbody>
@@ -201,6 +214,17 @@
                     <button class="copy-btn-inline" on:click={() => copyToClipboard(result.int8BE)} title="Copy">📋</button>
                   {/if}
                 </td>
+                {#if expertMode}
+                <td class="value-cell-with-copy hex-cell">
+                  <span class="value-text mono-hex">{result.int8BEHex || '—'}</span>
+                  {#if result.int8BEHex}
+                    <button class="copy-btn-inline" on:click={() => copyToClipboard(result.int8BEHex)} title="Copy hex">📋</button>
+                  {/if}
+                </td>
+                {/if}
+                <td class="value-cell na">—</td>
+                <td class="value-cell na">—</td>
+                <td class="value-cell na">—</td>
                 <td class="value-cell na">—</td>
                 <td class="value-cell na">—</td>
                 <td class="value-cell na">—</td>
@@ -217,12 +241,30 @@
                     <button class="copy-btn-inline" on:click={() => copyToClipboard(result.int16BE)} title="Copy">📋</button>
                   {/if}
                 </td>
+                {#if expertMode}
+                <td class="value-cell-with-copy hex-cell">
+                  <span class="value-text mono-hex">{result.int16BEHex || '—'}</span>
+                  {#if result.int16BEHex}
+                    <button class="copy-btn-inline" on:click={() => copyToClipboard(result.int16BEHex)} title="Copy hex">📋</button>
+                  {/if}
+                </td>
+                {/if}
                 <td class="value-cell-with-copy">
                   <span class="value-text">{formatValue(result.int16LE)}</span>
                   {#if hasValue(result.int16LE)}
                     <button class="copy-btn-inline" on:click={() => copyToClipboard(result.int16LE)} title="Copy">📋</button>
                   {/if}
                 </td>
+                {#if expertMode}
+                <td class="value-cell-with-copy hex-cell">
+                  <span class="value-text mono-hex">{result.int16LEHex || '—'}</span>
+                  {#if result.int16LEHex}
+                    <button class="copy-btn-inline" on:click={() => copyToClipboard(result.int16LEHex)} title="Copy hex">📋</button>
+                  {/if}
+                </td>
+                {/if}
+                <td class="value-cell na">—</td>
+                <td class="value-cell na">—</td>
                 <td class="value-cell na">—</td>
                 <td class="value-cell na">—</td>
               </tr>
@@ -238,24 +280,56 @@
                     <button class="copy-btn-inline" on:click={() => copyToClipboard(result.int32BE)} title="Copy">📋</button>
                   {/if}
                 </td>
+                {#if expertMode}
+                <td class="value-cell-with-copy hex-cell">
+                  <span class="value-text mono-hex">{result.int32BEHex || '—'}</span>
+                  {#if result.int32BEHex}
+                    <button class="copy-btn-inline" on:click={() => copyToClipboard(result.int32BEHex)} title="Copy hex">📋</button>
+                  {/if}
+                </td>
+                {/if}
                 <td class="value-cell-with-copy">
                   <span class="value-text">{formatValue(result.int32LE)}</span>
                   {#if hasValue(result.int32LE)}
                     <button class="copy-btn-inline" on:click={() => copyToClipboard(result.int32LE)} title="Copy">📋</button>
                   {/if}
                 </td>
+                {#if expertMode}
+                <td class="value-cell-with-copy hex-cell">
+                  <span class="value-text mono-hex">{result.int32LEHex || '—'}</span>
+                  {#if result.int32LEHex}
+                    <button class="copy-btn-inline" on:click={() => copyToClipboard(result.int32LEHex)} title="Copy hex">📋</button>
+                  {/if}
+                </td>
+                {/if}
                 <td class="value-cell-with-copy">
                   <span class="value-text">{formatValue(result.int32BADC)}</span>
                   {#if hasValue(result.int32BADC)}
                     <button class="copy-btn-inline" on:click={() => copyToClipboard(result.int32BADC)} title="Copy">📋</button>
                   {/if}
                 </td>
+                {#if expertMode}
+                <td class="value-cell-with-copy hex-cell">
+                  <span class="value-text mono-hex">{result.int32BADCHex || '—'}</span>
+                  {#if result.int32BADCHex}
+                    <button class="copy-btn-inline" on:click={() => copyToClipboard(result.int32BADCHex)} title="Copy hex">📋</button>
+                  {/if}
+                </td>
+                {/if}
                 <td class="value-cell-with-copy">
                   <span class="value-text">{formatValue(result.int32CDAB)}</span>
                   {#if hasValue(result.int32CDAB)}
                     <button class="copy-btn-inline" on:click={() => copyToClipboard(result.int32CDAB)} title="Copy">📋</button>
                   {/if}
                 </td>
+                {#if expertMode}
+                <td class="value-cell-with-copy hex-cell">
+                  <span class="value-text mono-hex">{result.int32CDABHex || '—'}</span>
+                  {#if result.int32CDABHex}
+                    <button class="copy-btn-inline" on:click={() => copyToClipboard(result.int32CDABHex)} title="Copy hex">📋</button>
+                  {/if}
+                </td>
+                {/if}
               </tr>
               {/if}
               
@@ -269,24 +343,56 @@
                     <button class="copy-btn-inline" on:click={() => copyToClipboard(result.int64BE)} title="Copy">📋</button>
                   {/if}
                 </td>
+                {#if expertMode}
+                <td class="value-cell-with-copy hex-cell">
+                  <span class="value-text mono-hex">{result.int64BEHex || '—'}</span>
+                  {#if result.int64BEHex}
+                    <button class="copy-btn-inline" on:click={() => copyToClipboard(result.int64BEHex)} title="Copy hex">📋</button>
+                  {/if}
+                </td>
+                {/if}
                 <td class="value-cell-with-copy">
                   <span class="value-text">{formatValue(result.int64LE)}</span>
                   {#if hasValue(result.int64LE)}
                     <button class="copy-btn-inline" on:click={() => copyToClipboard(result.int64LE)} title="Copy">📋</button>
                   {/if}
                 </td>
+                {#if expertMode}
+                <td class="value-cell-with-copy hex-cell">
+                  <span class="value-text mono-hex">{result.int64LEHex || '—'}</span>
+                  {#if result.int64LEHex}
+                    <button class="copy-btn-inline" on:click={() => copyToClipboard(result.int64LEHex)} title="Copy hex">📋</button>
+                  {/if}
+                </td>
+                {/if}
                 <td class="value-cell-with-copy">
                   <span class="value-text">{formatValue(result.int64BADC)}</span>
                   {#if hasValue(result.int64BADC)}
                     <button class="copy-btn-inline" on:click={() => copyToClipboard(result.int64BADC)} title="Copy">📋</button>
                   {/if}
                 </td>
+                {#if expertMode}
+                <td class="value-cell-with-copy hex-cell">
+                  <span class="value-text mono-hex">{result.int64BADCHex || '—'}</span>
+                  {#if result.int64BADCHex}
+                    <button class="copy-btn-inline" on:click={() => copyToClipboard(result.int64BADCHex)} title="Copy hex">📋</button>
+                  {/if}
+                </td>
+                {/if}
                 <td class="value-cell-with-copy">
                   <span class="value-text">{formatValue(result.int64CDAB)}</span>
                   {#if hasValue(result.int64CDAB)}
                     <button class="copy-btn-inline" on:click={() => copyToClipboard(result.int64CDAB)} title="Copy">📋</button>
                   {/if}
                 </td>
+                {#if expertMode}
+                <td class="value-cell-with-copy hex-cell">
+                  <span class="value-text mono-hex">{result.int64CDABHex || '—'}</span>
+                  {#if result.int64CDABHex}
+                    <button class="copy-btn-inline" on:click={() => copyToClipboard(result.int64CDABHex)} title="Copy hex">📋</button>
+                  {/if}
+                </td>
+                {/if}
               </tr>
               {/if}
               
@@ -300,6 +406,17 @@
                     <button class="copy-btn-inline" on:click={() => copyToClipboard(result.uint8BE)} title="Copy">📋</button>
                   {/if}
                 </td>
+                {#if expertMode}
+                <td class="value-cell-with-copy hex-cell">
+                  <span class="value-text mono-hex">{result.uint8BEHex || '—'}</span>
+                  {#if result.uint8BEHex}
+                    <button class="copy-btn-inline" on:click={() => copyToClipboard(result.uint8BEHex)} title="Copy hex">📋</button>
+                  {/if}
+                </td>
+                {/if}
+                <td class="value-cell na">—</td>
+                <td class="value-cell na">—</td>
+                <td class="value-cell na">—</td>
                 <td class="value-cell na">—</td>
                 <td class="value-cell na">—</td>
                 <td class="value-cell na">—</td>
@@ -316,12 +433,30 @@
                     <button class="copy-btn-inline" on:click={() => copyToClipboard(result.uint16BE)} title="Copy">📋</button>
                   {/if}
                 </td>
+                {#if expertMode}
+                <td class="value-cell-with-copy hex-cell">
+                  <span class="value-text mono-hex">{result.uint16BEHex || '—'}</span>
+                  {#if result.uint16BEHex}
+                    <button class="copy-btn-inline" on:click={() => copyToClipboard(result.uint16BEHex)} title="Copy hex">📋</button>
+                  {/if}
+                </td>
+                {/if}
                 <td class="value-cell-with-copy">
                   <span class="value-text">{formatValue(result.uint16LE)}</span>
                   {#if hasValue(result.uint16LE)}
                     <button class="copy-btn-inline" on:click={() => copyToClipboard(result.uint16LE)} title="Copy">📋</button>
                   {/if}
                 </td>
+                {#if expertMode}
+                <td class="value-cell-with-copy hex-cell">
+                  <span class="value-text mono-hex">{result.uint16LEHex || '—'}</span>
+                  {#if result.uint16LEHex}
+                    <button class="copy-btn-inline" on:click={() => copyToClipboard(result.uint16LEHex)} title="Copy hex">📋</button>
+                  {/if}
+                </td>
+                {/if}
+                <td class="value-cell na">—</td>
+                <td class="value-cell na">—</td>
                 <td class="value-cell na">—</td>
                 <td class="value-cell na">—</td>
               </tr>
@@ -337,24 +472,56 @@
                     <button class="copy-btn-inline" on:click={() => copyToClipboard(result.uint32BE)} title="Copy">📋</button>
                   {/if}
                 </td>
+                {#if expertMode}
+                <td class="value-cell-with-copy hex-cell">
+                  <span class="value-text mono-hex">{result.uint32BEHex || '—'}</span>
+                  {#if result.uint32BEHex}
+                    <button class="copy-btn-inline" on:click={() => copyToClipboard(result.uint32BEHex)} title="Copy hex">📋</button>
+                  {/if}
+                </td>
+                {/if}
                 <td class="value-cell-with-copy">
                   <span class="value-text">{formatValue(result.uint32LE)}</span>
                   {#if hasValue(result.uint32LE)}
                     <button class="copy-btn-inline" on:click={() => copyToClipboard(result.uint32LE)} title="Copy">📋</button>
                   {/if}
                 </td>
+                {#if expertMode}
+                <td class="value-cell-with-copy hex-cell">
+                  <span class="value-text mono-hex">{result.uint32LEHex || '—'}</span>
+                  {#if result.uint32LEHex}
+                    <button class="copy-btn-inline" on:click={() => copyToClipboard(result.uint32LEHex)} title="Copy hex">📋</button>
+                  {/if}
+                </td>
+                {/if}
                 <td class="value-cell-with-copy">
                   <span class="value-text">{formatValue(result.uint32BADC)}</span>
                   {#if hasValue(result.uint32BADC)}
                     <button class="copy-btn-inline" on:click={() => copyToClipboard(result.uint32BADC)} title="Copy">📋</button>
                   {/if}
                 </td>
+                {#if expertMode}
+                <td class="value-cell-with-copy hex-cell">
+                  <span class="value-text mono-hex">{result.uint32BADCHex || '—'}</span>
+                  {#if result.uint32BADCHex}
+                    <button class="copy-btn-inline" on:click={() => copyToClipboard(result.uint32BADCHex)} title="Copy hex">📋</button>
+                  {/if}
+                </td>
+                {/if}
                 <td class="value-cell-with-copy">
                   <span class="value-text">{formatValue(result.uint32CDAB)}</span>
                   {#if hasValue(result.uint32CDAB)}
                     <button class="copy-btn-inline" on:click={() => copyToClipboard(result.uint32CDAB)} title="Copy">📋</button>
                   {/if}
                 </td>
+                {#if expertMode}
+                <td class="value-cell-with-copy hex-cell">
+                  <span class="value-text mono-hex">{result.uint32CDABHex || '—'}</span>
+                  {#if result.uint32CDABHex}
+                    <button class="copy-btn-inline" on:click={() => copyToClipboard(result.uint32CDABHex)} title="Copy hex">📋</button>
+                  {/if}
+                </td>
+                {/if}
               </tr>
               {/if}
               
@@ -368,24 +535,56 @@
                     <button class="copy-btn-inline" on:click={() => copyToClipboard(result.uint64BE)} title="Copy">📋</button>
                   {/if}
                 </td>
+                {#if expertMode}
+                <td class="value-cell-with-copy hex-cell">
+                  <span class="value-text mono-hex">{result.uint64BEHex || '—'}</span>
+                  {#if result.uint64BEHex}
+                    <button class="copy-btn-inline" on:click={() => copyToClipboard(result.uint64BEHex)} title="Copy hex">📋</button>
+                  {/if}
+                </td>
+                {/if}
                 <td class="value-cell-with-copy">
                   <span class="value-text">{formatValue(result.uint64LE)}</span>
                   {#if hasValue(result.uint64LE)}
                     <button class="copy-btn-inline" on:click={() => copyToClipboard(result.uint64LE)} title="Copy">📋</button>
                   {/if}
                 </td>
+                {#if expertMode}
+                <td class="value-cell-with-copy hex-cell">
+                  <span class="value-text mono-hex">{result.uint64LEHex || '—'}</span>
+                  {#if result.uint64LEHex}
+                    <button class="copy-btn-inline" on:click={() => copyToClipboard(result.uint64LEHex)} title="Copy hex">📋</button>
+                  {/if}
+                </td>
+                {/if}
                 <td class="value-cell-with-copy">
                   <span class="value-text">{formatValue(result.uint64BADC)}</span>
                   {#if hasValue(result.uint64BADC)}
                     <button class="copy-btn-inline" on:click={() => copyToClipboard(result.uint64BADC)} title="Copy">📋</button>
                   {/if}
                 </td>
+                {#if expertMode}
+                <td class="value-cell-with-copy hex-cell">
+                  <span class="value-text mono-hex">{result.uint64BADCHex || '—'}</span>
+                  {#if result.uint64BADCHex}
+                    <button class="copy-btn-inline" on:click={() => copyToClipboard(result.uint64BADCHex)} title="Copy hex">📋</button>
+                  {/if}
+                </td>
+                {/if}
                 <td class="value-cell-with-copy">
                   <span class="value-text">{formatValue(result.uint64CDAB)}</span>
                   {#if hasValue(result.uint64CDAB)}
                     <button class="copy-btn-inline" on:click={() => copyToClipboard(result.uint64CDAB)} title="Copy">📋</button>
                   {/if}
                 </td>
+                {#if expertMode}
+                <td class="value-cell-with-copy hex-cell">
+                  <span class="value-text mono-hex">{result.uint64CDABHex || '—'}</span>
+                  {#if result.uint64CDABHex}
+                    <button class="copy-btn-inline" on:click={() => copyToClipboard(result.uint64CDABHex)} title="Copy hex">📋</button>
+                  {/if}
+                </td>
+                {/if}
               </tr>
               {/if}
             </tbody>
@@ -400,9 +599,13 @@
               <tr>
                 <th>Type</th>
                 <th>Big Endian</th>
+                {#if expertMode}<th>Hex (BE)</th>{/if}
                 <th>Little Endian</th>
+                {#if expertMode}<th>Hex (LE)</th>{/if}
                 <th>Mid-Big (BADC)</th>
+                {#if expertMode}<th>Hex (BADC)</th>{/if}
                 <th>Mid-Little (CDAB)</th>
+                {#if expertMode}<th>Hex (CDAB)</th>{/if}
               </tr>
             </thead>
             <tbody>
@@ -416,24 +619,56 @@
                     <button class="copy-btn-inline" on:click={() => copyToClipboard(result.float32BE)} title="Copy">📋</button>
                   {/if}
                 </td>
+                {#if expertMode}
+                <td class="value-cell-with-copy hex-cell">
+                  <span class="value-text mono-hex">{result.float32BEHex || '—'}</span>
+                  {#if result.float32BEHex}
+                    <button class="copy-btn-inline" on:click={() => copyToClipboard(result.float32BEHex)} title="Copy hex">📋</button>
+                  {/if}
+                </td>
+                {/if}
                 <td class="value-cell-with-copy">
                   <span class="value-text">{formatValue(result.float32LE)}</span>
                   {#if hasValue(result.float32LE)}
                     <button class="copy-btn-inline" on:click={() => copyToClipboard(result.float32LE)} title="Copy">📋</button>
                   {/if}
                 </td>
+                {#if expertMode}
+                <td class="value-cell-with-copy hex-cell">
+                  <span class="value-text mono-hex">{result.float32LEHex || '—'}</span>
+                  {#if result.float32LEHex}
+                    <button class="copy-btn-inline" on:click={() => copyToClipboard(result.float32LEHex)} title="Copy hex">📋</button>
+                  {/if}
+                </td>
+                {/if}
                 <td class="value-cell-with-copy">
                   <span class="value-text">{formatValue(result.float32BADC)}</span>
                   {#if hasValue(result.float32BADC)}
                     <button class="copy-btn-inline" on:click={() => copyToClipboard(result.float32BADC)} title="Copy">📋</button>
                   {/if}
                 </td>
+                {#if expertMode}
+                <td class="value-cell-with-copy hex-cell">
+                  <span class="value-text mono-hex">{result.float32BADCHex || '—'}</span>
+                  {#if result.float32BADCHex}
+                    <button class="copy-btn-inline" on:click={() => copyToClipboard(result.float32BADCHex)} title="Copy hex">📋</button>
+                  {/if}
+                </td>
+                {/if}
                 <td class="value-cell-with-copy">
                   <span class="value-text">{formatValue(result.float32CDAB)}</span>
                   {#if hasValue(result.float32CDAB)}
                     <button class="copy-btn-inline" on:click={() => copyToClipboard(result.float32CDAB)} title="Copy">📋</button>
                   {/if}
                 </td>
+                {#if expertMode}
+                <td class="value-cell-with-copy hex-cell">
+                  <span class="value-text mono-hex">{result.float32CDABHex || '—'}</span>
+                  {#if result.float32CDABHex}
+                    <button class="copy-btn-inline" on:click={() => copyToClipboard(result.float32CDABHex)} title="Copy hex">📋</button>
+                  {/if}
+                </td>
+                {/if}
               </tr>
               {/if}
               
@@ -447,24 +682,56 @@
                     <button class="copy-btn-inline" on:click={() => copyToClipboard(result.float64BE)} title="Copy">📋</button>
                   {/if}
                 </td>
+                {#if expertMode}
+                <td class="value-cell-with-copy hex-cell">
+                  <span class="value-text mono-hex">{result.float64BEHex || '—'}</span>
+                  {#if result.float64BEHex}
+                    <button class="copy-btn-inline" on:click={() => copyToClipboard(result.float64BEHex)} title="Copy hex">📋</button>
+                  {/if}
+                </td>
+                {/if}
                 <td class="value-cell-with-copy">
                   <span class="value-text">{formatValue(result.float64LE)}</span>
                   {#if hasValue(result.float64LE)}
                     <button class="copy-btn-inline" on:click={() => copyToClipboard(result.float64LE)} title="Copy">📋</button>
                   {/if}
                 </td>
+                {#if expertMode}
+                <td class="value-cell-with-copy hex-cell">
+                  <span class="value-text mono-hex">{result.float64LEHex || '—'}</span>
+                  {#if result.float64LEHex}
+                    <button class="copy-btn-inline" on:click={() => copyToClipboard(result.float64LEHex)} title="Copy hex">📋</button>
+                  {/if}
+                </td>
+                {/if}
                 <td class="value-cell-with-copy">
                   <span class="value-text">{formatValue(result.float64BADC)}</span>
                   {#if hasValue(result.float64BADC)}
                     <button class="copy-btn-inline" on:click={() => copyToClipboard(result.float64BADC)} title="Copy">📋</button>
                   {/if}
                 </td>
+                {#if expertMode}
+                <td class="value-cell-with-copy hex-cell">
+                  <span class="value-text mono-hex">{result.float64BADCHex || '—'}</span>
+                  {#if result.float64BADCHex}
+                    <button class="copy-btn-inline" on:click={() => copyToClipboard(result.float64BADCHex)} title="Copy hex">📋</button>
+                  {/if}
+                </td>
+                {/if}
                 <td class="value-cell-with-copy">
                   <span class="value-text">{formatValue(result.float64CDAB)}</span>
                   {#if hasValue(result.float64CDAB)}
                     <button class="copy-btn-inline" on:click={() => copyToClipboard(result.float64CDAB)} title="Copy">📋</button>
                   {/if}
                 </td>
+                {#if expertMode}
+                <td class="value-cell-with-copy hex-cell">
+                  <span class="value-text mono-hex">{result.float64CDABHex || '—'}</span>
+                  {#if result.float64CDABHex}
+                    <button class="copy-btn-inline" on:click={() => copyToClipboard(result.float64CDABHex)} title="Copy hex">📋</button>
+                  {/if}
+                </td>
+                {/if}
               </tr>
               {/if}
             </tbody>
@@ -482,6 +749,16 @@
                   <td class="value-cell-with-copy mono wide">
                     <span class="value-text">{result.bytes}</span>
                     <button class="copy-btn-inline" on:click={() => copyToClipboard(result.bytes)} title="Copy">📋</button>
+                  </td>
+                </tr>
+              {/if}
+              
+              {#if result.paddedHex}
+                <tr class="highlighted">
+                  <td class="type-cell"><span class="type-badge bytes">PADDED</span></td>
+                  <td class="value-cell-with-copy mono wide">
+                    <span class="value-text">{result.paddedHex}</span>
+                    <button class="copy-btn-inline" on:click={() => copyToClipboard(result.paddedHex)} title="Copy">📋</button>
                   </td>
                 </tr>
               {/if}
@@ -605,6 +882,38 @@
     font-size: 1.25rem;
     font-weight: 600;
     letter-spacing: -0.01em;
+  }
+
+  .header-controls {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+  }
+
+  .expert-mode-toggle {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .expert-mode-toggle input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: var(--color-int-signed);
+  }
+
+  .checkbox-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    transition: color 0.15s;
+  }
+
+  .expert-mode-toggle:hover .checkbox-label {
+    color: var(--text-primary);
   }
 
   .theme-toggle {
@@ -817,6 +1126,16 @@
 
   .type-cell {
     width: 90px;
+  }
+
+  .hex-cell {
+    background: var(--bg-secondary);
+  }
+
+  .mono-hex {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-secondary);
   }
 
   .value-cell {
