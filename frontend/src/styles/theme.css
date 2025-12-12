@@ -1,0 +1,55 @@
+/* Theme CSS Variables */
+:root {
+  /* Colors - Light Mode */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f9fafb;
+  --bg-tertiary: #1f2937;
+  --bg-hover: #f3f4f6;
+  --text-primary: #111827;
+  --text-secondary: #6b7280;
+  --text-tertiary: #9ca3af;
+  --border-color: #e5e7eb;
+  --shadow: rgba(0, 0, 0, 0.1);
+  
+  /* Type Colors */
+  --color-int-signed: #2563eb;
+  --color-int-unsigned: #059669;
+  --color-float: #dc2626;
+  --color-binary: #7c3aed;
+  --color-bytes: #ea580c;
+  --color-error: #ef4444;
+  
+  /* Spacing Scale */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  
+  /* Border Radius */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  
+  /* Typography */
+  --font-mono: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+}
+
+/* Dark Mode */
+.dark {
+  --bg-primary: #111827;
+  --bg-secondary: #1f2937;
+  --bg-tertiary: #374151;
+  --bg-hover: #1f2937;
+  --text-primary: #f9fafb;
+  --text-secondary: #d1d5db;
+  --text-tertiary: #9ca3af;
+  --border-color: #374151;
+  --shadow: rgba(0, 0, 0, 0.5);
+  
+  --color-int-signed: #60a5fa;
+  --color-int-unsigned: #34d399;
+  --color-float: #f87171;
+  --color-binary: #a78bfa;
+  --color-bytes: #fb923c;
+}
