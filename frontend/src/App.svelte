@@ -719,7 +719,8 @@
   .table-wrapper {
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
-    overflow: hidden;
+    overflow-x: auto;
+    overflow-y: visible;
   }
 
   .table-title {
@@ -736,6 +737,7 @@
   /* Table Styles */
   table {
     width: 100%;
+    min-width: 600px;
     border-collapse: collapse;
     font-size: 12px;
   }
