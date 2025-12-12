@@ -94,6 +94,11 @@
   function hasValue(value) {
     return value !== null && value !== undefined
   }
+  
+  // Check if any value in array exists
+  function hasAnyValue(...values) {
+    return values.some(v => hasValue(v))
+  }
 </script>
 
 <svelte:window on:keydown={handleKeydown} />
@@ -187,6 +192,7 @@
             </thead>
             <tbody>
               <!-- INT8 -->
+              {#if hasAnyValue(result.int8BE)}
               <tr class:unavailable={!hasValue(result.int8BE)} class:highlighted={inputMode === 'int' && intType === 'int8'}>
                 <td class="type-cell"><span class="type-badge int-signed">INT8</span></td>
                 <td class="value-cell-with-copy">
@@ -199,8 +205,10 @@
                 <td class="value-cell na">—</td>
                 <td class="value-cell na">—</td>
               </tr>
+              {/if}
               
               <!-- INT16 -->
+              {#if hasAnyValue(result.int16BE, result.int16LE)}
               <tr class:unavailable={!hasValue(result.int16BE) && !hasValue(result.int16LE)} class:highlighted={inputMode === 'int' && intType === 'int16'}>
                 <td class="type-cell"><span class="type-badge int-signed">INT16</span></td>
                 <td class="value-cell-with-copy">
@@ -218,8 +226,10 @@
                 <td class="value-cell na">—</td>
                 <td class="value-cell na">—</td>
               </tr>
+              {/if}
               
               <!-- INT32 -->
+              {#if hasAnyValue(result.int32BE, result.int32LE, result.int32BADC, result.int32CDAB)}
               <tr class:unavailable={!hasValue(result.int32BE) && !hasValue(result.int32LE)} class:highlighted={inputMode === 'int' && intType === 'int32'}>
                 <td class="type-cell"><span class="type-badge int-signed">INT32</span></td>
                 <td class="value-cell-with-copy">
@@ -247,8 +257,10 @@
                   {/if}
                 </td>
               </tr>
+              {/if}
               
               <!-- INT64 -->
+              {#if hasAnyValue(result.int64BE, result.int64LE, result.int64BADC, result.int64CDAB)}
               <tr class:unavailable={!hasValue(result.int64BE) && !hasValue(result.int64LE)} class:highlighted={inputMode === 'int' && intType === 'int64'}>
                 <td class="type-cell"><span class="type-badge int-signed">INT64</span></td>
                 <td class="value-cell-with-copy">
@@ -276,8 +288,10 @@
                   {/if}
                 </td>
               </tr>
+              {/if}
               
               <!-- UINT8 -->
+              {#if hasAnyValue(result.uint8BE)}
               <tr class:unavailable={!hasValue(result.uint8BE)} class:highlighted={inputMode === 'int' && intType === 'uint8'}>
                 <td class="type-cell"><span class="type-badge int-unsigned">UINT8</span></td>
                 <td class="value-cell-with-copy">
@@ -290,8 +304,10 @@
                 <td class="value-cell na">—</td>
                 <td class="value-cell na">—</td>
               </tr>
+              {/if}
               
               <!-- UINT16 -->
+              {#if hasAnyValue(result.uint16BE, result.uint16LE)}
               <tr class:unavailable={!hasValue(result.uint16BE) && !hasValue(result.uint16LE)} class:highlighted={inputMode === 'int' && intType === 'uint16'}>
                 <td class="type-cell"><span class="type-badge int-unsigned">UINT16</span></td>
                 <td class="value-cell-with-copy">
@@ -309,8 +325,10 @@
                 <td class="value-cell na">—</td>
                 <td class="value-cell na">—</td>
               </tr>
+              {/if}
               
               <!-- UINT32 -->
+              {#if hasAnyValue(result.uint32BE, result.uint32LE, result.uint32BADC, result.uint32CDAB)}
               <tr class:unavailable={!hasValue(result.uint32BE) && !hasValue(result.uint32LE)} class:highlighted={inputMode === 'int' && intType === 'uint32'}>
                 <td class="type-cell"><span class="type-badge int-unsigned">UINT32</span></td>
                 <td class="value-cell-with-copy">
@@ -338,8 +356,10 @@
                   {/if}
                 </td>
               </tr>
+              {/if}
               
               <!-- UINT64 -->
+              {#if hasAnyValue(result.uint64BE, result.uint64LE, result.uint64BADC, result.uint64CDAB)}
               <tr class:unavailable={!hasValue(result.uint64BE) && !hasValue(result.uint64LE)} class:highlighted={inputMode === 'int' && intType === 'uint64'}>
                 <td class="type-cell"><span class="type-badge int-unsigned">UINT64</span></td>
                 <td class="value-cell-with-copy">
@@ -367,6 +387,7 @@
                   {/if}
                 </td>
               </tr>
+              {/if}
             </tbody>
           </table>
         </div>
@@ -386,6 +407,7 @@
             </thead>
             <tbody>
               <!-- FLOAT32 -->
+              {#if hasAnyValue(result.float32BE, result.float32LE, result.float32BADC, result.float32CDAB)}
               <tr class:unavailable={!hasValue(result.float32BE) && !hasValue(result.float32LE)}>
                 <td class="type-cell"><span class="type-badge float">FLOAT32</span></td>
                 <td class="value-cell-with-copy">
@@ -413,8 +435,10 @@
                   {/if}
                 </td>
               </tr>
+              {/if}
               
               <!-- FLOAT64 -->
+              {#if hasAnyValue(result.float64BE, result.float64LE, result.float64BADC, result.float64CDAB)}
               <tr class:unavailable={!hasValue(result.float64BE) && !hasValue(result.float64LE)}>
                 <td class="type-cell"><span class="type-badge float">FLOAT64</span></td>
                 <td class="value-cell-with-copy">
@@ -442,6 +466,7 @@
                   {/if}
                 </td>
               </tr>
+              {/if}
             </tbody>
           </table>
         </div>
@@ -719,7 +744,7 @@
   .table-wrapper {
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
-    overflow-x: auto;
+    overflow-x: hidden;
     overflow-y: visible;
   }
 
