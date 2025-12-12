@@ -181,6 +181,8 @@
                 <th>Type</th>
                 <th>Big Endian</th>
                 <th>Little Endian</th>
+                <th>Mid-Big (BADC)</th>
+                <th>Mid-Little (CDAB)</th>
                 <th class="copy-col"></th>
               </tr>
             </thead>
@@ -189,6 +191,8 @@
               <tr class:unavailable={!hasValue(result.int8BE)} class:highlighted={inputMode === 'int' && intType === 'int8'}>
                 <td class="type-cell"><span class="type-badge int-signed">INT8</span></td>
                 <td class="value-cell">{formatValue(result.int8BE)}</td>
+                <td class="value-cell na">—</td>
+                <td class="value-cell na">—</td>
                 <td class="value-cell na">—</td>
                 <td class="copy-cell">
                   {#if hasValue(result.int8BE)}
@@ -202,6 +206,8 @@
                 <td class="type-cell"><span class="type-badge int-signed">INT16</span></td>
                 <td class="value-cell">{formatValue(result.int16BE)}</td>
                 <td class="value-cell">{formatValue(result.int16LE)}</td>
+                <td class="value-cell na">—</td>
+                <td class="value-cell na">—</td>
                 <td class="copy-cell">
                   {#if hasValue(result.int16BE)}
                     <button class="copy-btn" on:click={() => copyToClipboard(result.int16BE)} title="Copy BE">📋</button>
@@ -216,6 +222,8 @@
                 <td class="type-cell"><span class="type-badge int-signed">INT32</span></td>
                 <td class="value-cell">{formatValue(result.int32BE)}</td>
                 <td class="value-cell">{formatValue(result.int32LE)}</td>
+                <td class="value-cell">{formatValue(result.int32BADC)}</td>
+                <td class="value-cell">{formatValue(result.int32CDAB)}</td>
                 <td class="copy-cell">
                   {#if hasValue(result.int32BE)}
                     <button class="copy-btn" on:click={() => copyToClipboard(result.int32BE)} title="Copy BE">📋</button>
@@ -230,6 +238,8 @@
                 <td class="type-cell"><span class="type-badge int-signed">INT64</span></td>
                 <td class="value-cell">{formatValue(result.int64BE)}</td>
                 <td class="value-cell">{formatValue(result.int64LE)}</td>
+                <td class="value-cell">{formatValue(result.int64BADC)}</td>
+                <td class="value-cell">{formatValue(result.int64CDAB)}</td>
                 <td class="copy-cell">
                   {#if hasValue(result.int64BE)}
                     <button class="copy-btn" on:click={() => copyToClipboard(result.int64BE)} title="Copy BE">📋</button>
@@ -244,6 +254,8 @@
                 <td class="type-cell"><span class="type-badge int-unsigned">UINT8</span></td>
                 <td class="value-cell">{formatValue(result.uint8BE)}</td>
                 <td class="value-cell na">—</td>
+                <td class="value-cell na">—</td>
+                <td class="value-cell na">—</td>
                 <td class="copy-cell">
                   {#if hasValue(result.uint8BE)}
                     <button class="copy-btn" on:click={() => copyToClipboard(result.uint8BE)} title="Copy">📋</button>
@@ -256,6 +268,8 @@
                 <td class="type-cell"><span class="type-badge int-unsigned">UINT16</span></td>
                 <td class="value-cell">{formatValue(result.uint16BE)}</td>
                 <td class="value-cell">{formatValue(result.uint16LE)}</td>
+                <td class="value-cell na">—</td>
+                <td class="value-cell na">—</td>
                 <td class="copy-cell">
                   {#if hasValue(result.uint16BE)}
                     <button class="copy-btn" on:click={() => copyToClipboard(result.uint16BE)} title="Copy BE">📋</button>
@@ -270,6 +284,8 @@
                 <td class="type-cell"><span class="type-badge int-unsigned">UINT32</span></td>
                 <td class="value-cell">{formatValue(result.uint32BE)}</td>
                 <td class="value-cell">{formatValue(result.uint32LE)}</td>
+                <td class="value-cell">{formatValue(result.uint32BADC)}</td>
+                <td class="value-cell">{formatValue(result.uint32CDAB)}</td>
                 <td class="copy-cell">
                   {#if hasValue(result.uint32BE)}
                     <button class="copy-btn" on:click={() => copyToClipboard(result.uint32BE)} title="Copy BE">📋</button>
@@ -284,6 +300,8 @@
                 <td class="type-cell"><span class="type-badge int-unsigned">UINT64</span></td>
                 <td class="value-cell">{formatValue(result.uint64BE)}</td>
                 <td class="value-cell">{formatValue(result.uint64LE)}</td>
+                <td class="value-cell">{formatValue(result.uint64BADC)}</td>
+                <td class="value-cell">{formatValue(result.uint64CDAB)}</td>
                 <td class="copy-cell">
                   {#if hasValue(result.uint64BE)}
                     <button class="copy-btn" on:click={() => copyToClipboard(result.uint64BE)} title="Copy BE">📋</button>
@@ -305,6 +323,8 @@
                 <th>Type</th>
                 <th>Big Endian</th>
                 <th>Little Endian</th>
+                <th>Mid-Big (BADC)</th>
+                <th>Mid-Little (CDAB)</th>
                 <th class="copy-col"></th>
               </tr>
             </thead>
@@ -314,6 +334,8 @@
                 <td class="type-cell"><span class="type-badge float">FLOAT32</span></td>
                 <td class="value-cell">{formatValue(result.float32BE)}</td>
                 <td class="value-cell">{formatValue(result.float32LE)}</td>
+                <td class="value-cell">{formatValue(result.float32BADC)}</td>
+                <td class="value-cell">{formatValue(result.float32CDAB)}</td>
                 <td class="copy-cell">
                   {#if hasValue(result.float32BE)}
                     <button class="copy-btn" on:click={() => copyToClipboard(result.float32BE)} title="Copy BE">📋</button>
@@ -328,6 +350,8 @@
                 <td class="type-cell"><span class="type-badge float">FLOAT64</span></td>
                 <td class="value-cell">{formatValue(result.float64BE)}</td>
                 <td class="value-cell">{formatValue(result.float64LE)}</td>
+                <td class="value-cell">{formatValue(result.float64BADC)}</td>
+                <td class="value-cell">{formatValue(result.float64CDAB)}</td>
                 <td class="copy-cell">
                   {#if hasValue(result.float64BE)}
                     <button class="copy-btn" on:click={() => copyToClipboard(result.float64BE)} title="Copy BE">📋</button>

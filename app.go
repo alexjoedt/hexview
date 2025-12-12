@@ -37,6 +37,16 @@ type ConversionResult struct {
 	Int32LE *int32 `json:"int32LE,omitempty"`
 	Int64LE *int64 `json:"int64LE,omitempty"`
 
+	// Signed Integers - Mid-Big Endian (BADC)
+	Int16BADC *int16 `json:"int16BADC,omitempty"`
+	Int32BADC *int32 `json:"int32BADC,omitempty"`
+	Int64BADC *int64 `json:"int64BADC,omitempty"`
+
+	// Signed Integers - Mid-Little Endian (CDAB)
+	Int16CDAB *int16 `json:"int16CDAB,omitempty"`
+	Int32CDAB *int32 `json:"int32CDAB,omitempty"`
+	Int64CDAB *int64 `json:"int64CDAB,omitempty"`
+
 	// Unsigned Integers - Big Endian
 	Uint8BE  *uint8  `json:"uint8BE,omitempty"`
 	Uint16BE *uint16 `json:"uint16BE,omitempty"`
@@ -48,11 +58,29 @@ type ConversionResult struct {
 	Uint32LE *uint32 `json:"uint32LE,omitempty"`
 	Uint64LE *uint64 `json:"uint64LE,omitempty"`
 
+	// Unsigned Integers - Mid-Big Endian (BADC)
+	Uint16BADC *uint16 `json:"uint16BADC,omitempty"`
+	Uint32BADC *uint32 `json:"uint32BADC,omitempty"`
+	Uint64BADC *uint64 `json:"uint64BADC,omitempty"`
+
+	// Unsigned Integers - Mid-Little Endian (CDAB)
+	Uint16CDAB *uint16 `json:"uint16CDAB,omitempty"`
+	Uint32CDAB *uint32 `json:"uint32CDAB,omitempty"`
+	Uint64CDAB *uint64 `json:"uint64CDAB,omitempty"`
+
 	// Floating Point (stored as strings to support NaN/Inf)
 	Float32BE *string `json:"float32BE,omitempty"`
 	Float64BE *string `json:"float64BE,omitempty"`
 	Float32LE *string `json:"float32LE,omitempty"`
 	Float64LE *string `json:"float64LE,omitempty"`
+
+	// Floating Point - Mid-Big Endian (BADC)
+	Float32BADC *string `json:"float32BADC,omitempty"`
+	Float64BADC *string `json:"float64BADC,omitempty"`
+
+	// Floating Point - Mid-Little Endian (CDAB)
+	Float32CDAB *string `json:"float32CDAB,omitempty"`
+	Float64CDAB *string `json:"float64CDAB,omitempty"`
 
 	// Binary Representations
 	Binary string `json:"binary,omitempty"`
@@ -128,6 +156,28 @@ func (a *App) ConvertHex(hexInput string) (*ConversionResult, error) {
 		result.Int64LE = &v
 	}
 
+	// Try all signed integer conversions (Mid-Big Endian / BADC)
+	if v, err := convert.HexToInt16BADC(hexInput); err == nil {
+		result.Int16BADC = &v
+	}
+	if v, err := convert.HexToInt32BADC(hexInput); err == nil {
+		result.Int32BADC = &v
+	}
+	if v, err := convert.HexToInt64BADC(hexInput); err == nil {
+		result.Int64BADC = &v
+	}
+
+	// Try all signed integer conversions (Mid-Little Endian / CDAB)
+	if v, err := convert.HexToInt16CDAB(hexInput); err == nil {
+		result.Int16CDAB = &v
+	}
+	if v, err := convert.HexToInt32CDAB(hexInput); err == nil {
+		result.Int32CDAB = &v
+	}
+	if v, err := convert.HexToInt64CDAB(hexInput); err == nil {
+		result.Int64CDAB = &v
+	}
+
 	// Try all unsigned integer conversions (Big Endian)
 	if v, err := convert.HexToUint8(hexInput); err == nil {
 		result.Uint8BE = &v
@@ -153,7 +203,29 @@ func (a *App) ConvertHex(hexInput string) (*ConversionResult, error) {
 		result.Uint64LE = &v
 	}
 
-	// Try float conversions
+	// Try all unsigned integer conversions (Mid-Big Endian / BADC)
+	if v, err := convert.HexToUint16BADC(hexInput); err == nil {
+		result.Uint16BADC = &v
+	}
+	if v, err := convert.HexToUint32BADC(hexInput); err == nil {
+		result.Uint32BADC = &v
+	}
+	if v, err := convert.HexToUint64BADC(hexInput); err == nil {
+		result.Uint64BADC = &v
+	}
+
+	// Try all unsigned integer conversions (Mid-Little Endian / CDAB)
+	if v, err := convert.HexToUint16CDAB(hexInput); err == nil {
+		result.Uint16CDAB = &v
+	}
+	if v, err := convert.HexToUint32CDAB(hexInput); err == nil {
+		result.Uint32CDAB = &v
+	}
+	if v, err := convert.HexToUint64CDAB(hexInput); err == nil {
+		result.Uint64CDAB = &v
+	}
+
+	// Try float conversions (Big Endian)
 	if v, err := convert.HexToFloat32(hexInput); err == nil {
 		formatted := formatFloat32(v)
 		result.Float32BE = &formatted
@@ -162,6 +234,8 @@ func (a *App) ConvertHex(hexInput string) (*ConversionResult, error) {
 		formatted := formatFloat64(v)
 		result.Float64BE = &formatted
 	}
+
+	// Try float conversions (Little Endian)
 	if v, err := convert.HexToFloat32LE(hexInput); err == nil {
 		formatted := formatFloat32(v)
 		result.Float32LE = &formatted
@@ -169,6 +243,26 @@ func (a *App) ConvertHex(hexInput string) (*ConversionResult, error) {
 	if v, err := convert.HexToFloat64LE(hexInput); err == nil {
 		formatted := formatFloat64(v)
 		result.Float64LE = &formatted
+	}
+
+	// Try float conversions (Mid-Big Endian / BADC)
+	if v, err := convert.HexToFloat32BADC(hexInput); err == nil {
+		formatted := formatFloat32(v)
+		result.Float32BADC = &formatted
+	}
+	if v, err := convert.HexToFloat64BADC(hexInput); err == nil {
+		formatted := formatFloat64(v)
+		result.Float64BADC = &formatted
+	}
+
+	// Try float conversions (Mid-Little Endian / CDAB)
+	if v, err := convert.HexToFloat32CDAB(hexInput); err == nil {
+		formatted := formatFloat32(v)
+		result.Float32CDAB = &formatted
+	}
+	if v, err := convert.HexToFloat64CDAB(hexInput); err == nil {
+		formatted := formatFloat64(v)
+		result.Float64CDAB = &formatted
 	}
 
 	return result, nil

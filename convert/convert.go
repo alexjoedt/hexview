@@ -282,6 +282,250 @@ func intToBinary[T integer](n T, byteSize int, endian binary.ByteOrder) string {
 	return BytesToBinary(bytes)
 }
 
+// swapToBADC swaps bytes to Mid-Big Endian (BADC) byte order.
+// For 2-byte values: equivalent to big-endian (no swap needed)
+// For 4-byte values: swap word pairs [A,B,C,D] → [B,A,D,C]
+// For 8-byte values: swap 32-bit halves [A,B,C,D,E,F,G,H] → [E,F,G,H,A,B,C,D]
+func swapToBADC(bytes []byte) []byte {
+	result := make([]byte, len(bytes))
+	copy(result, bytes)
+
+	switch len(bytes) {
+	case 2:
+		// No swap for 16-bit (equivalent to big-endian)
+		return result
+	case 4:
+		// Swap bytes within each 16-bit word
+		result[0], result[1] = bytes[1], bytes[0]
+		result[2], result[3] = bytes[3], bytes[2]
+	case 8:
+		// Swap 32-bit words
+		result[0], result[1], result[2], result[3] = bytes[4], bytes[5], bytes[6], bytes[7]
+		result[4], result[5], result[6], result[7] = bytes[0], bytes[1], bytes[2], bytes[3]
+	}
+
+	return result
+}
+
+// swapToCDAB swaps bytes to Mid-Little Endian (CDAB) byte order.
+// For 2-byte values: equivalent to little-endian (reverse bytes)
+// For 4-byte values: swap 16-bit words [A,B,C,D] → [C,D,A,B]
+// For 8-byte values: swap and reverse 32-bit halves [A,B,C,D,E,F,G,H] → [C,D,A,B,G,H,E,F]
+func swapToCDAB(bytes []byte) []byte {
+	result := make([]byte, len(bytes))
+	copy(result, bytes)
+
+	switch len(bytes) {
+	case 2:
+		// Equivalent to little-endian
+		result[0], result[1] = bytes[1], bytes[0]
+	case 4:
+		// Swap 16-bit word pairs
+		result[0], result[1] = bytes[2], bytes[3]
+		result[2], result[3] = bytes[0], bytes[1]
+	case 8:
+		// Swap 16-bit words within each 32-bit half
+		result[0], result[1] = bytes[2], bytes[3]
+		result[2], result[3] = bytes[0], bytes[1]
+		result[4], result[5] = bytes[6], bytes[7]
+		result[6], result[7] = bytes[4], bytes[5]
+	}
+
+	return result
+}
+
+// hexToIntBADC is a helper for converting hex strings to integer types using BADC byte order.
+func hexToIntBADC[T integer](hexStr string, byteSize int) (T, error) {
+	bytes, err := ParseHex(hexStr)
+	if err != nil {
+		return 0, err
+	}
+
+	if len(bytes) != byteSize {
+		return 0, fmt.Errorf("%w: expected %d bytes, got %d", ErrInvalidLength, byteSize, len(bytes))
+	}
+
+	// Convert to big-endian first, then swap to BADC
+	swapped := swapToBADC(bytes)
+
+	var result T
+	switch byteSize {
+	case 1:
+		result = T(swapped[0])
+	case 2:
+		result = T(binary.BigEndian.Uint16(swapped))
+	case 4:
+		result = T(binary.BigEndian.Uint32(swapped))
+	case 8:
+		result = T(binary.BigEndian.Uint64(swapped))
+	}
+
+	return result, nil
+}
+
+// hexToIntCDAB is a helper for converting hex strings to integer types using CDAB byte order.
+func hexToIntCDAB[T integer](hexStr string, byteSize int) (T, error) {
+	bytes, err := ParseHex(hexStr)
+	if err != nil {
+		return 0, err
+	}
+
+	if len(bytes) != byteSize {
+		return 0, fmt.Errorf("%w: expected %d bytes, got %d", ErrInvalidLength, byteSize, len(bytes))
+	}
+
+	// Convert to big-endian first, then swap to CDAB
+	swapped := swapToCDAB(bytes)
+
+	var result T
+	switch byteSize {
+	case 1:
+		result = T(swapped[0])
+	case 2:
+		result = T(binary.BigEndian.Uint16(swapped))
+	case 4:
+		result = T(binary.BigEndian.Uint32(swapped))
+	case 8:
+		result = T(binary.BigEndian.Uint64(swapped))
+	}
+
+	return result, nil
+}
+
+// intToHexBADC is a helper for converting integer types to hex strings using BADC byte order.
+func intToHexBADC[T integer](n T, byteSize int) string {
+	bytes := make([]byte, byteSize)
+
+	switch byteSize {
+	case 1:
+		bytes[0] = byte(n)
+	case 2:
+		binary.BigEndian.PutUint16(bytes, uint16(n))
+	case 4:
+		binary.BigEndian.PutUint32(bytes, uint32(n))
+	case 8:
+		binary.BigEndian.PutUint64(bytes, uint64(n))
+	}
+
+	// Swap to BADC order
+	swapped := swapToBADC(bytes)
+	return hex.EncodeToString(swapped)
+}
+
+// intToHexCDAB is a helper for converting integer types to hex strings using CDAB byte order.
+func intToHexCDAB[T integer](n T, byteSize int) string {
+	bytes := make([]byte, byteSize)
+
+	switch byteSize {
+	case 1:
+		bytes[0] = byte(n)
+	case 2:
+		binary.BigEndian.PutUint16(bytes, uint16(n))
+	case 4:
+		binary.BigEndian.PutUint32(bytes, uint32(n))
+	case 8:
+		binary.BigEndian.PutUint64(bytes, uint64(n))
+	}
+
+	// Swap to CDAB order
+	swapped := swapToCDAB(bytes)
+	return hex.EncodeToString(swapped)
+}
+
+// binaryToIntBADC converts a binary string to an integer type using BADC byte order.
+func binaryToIntBADC[T integer](binStr string, byteSize int) (T, error) {
+	bytes, err := ParseBinary(binStr)
+	if err != nil {
+		return 0, err
+	}
+
+	if len(bytes) != byteSize {
+		return 0, fmt.Errorf("%w: expected %d bytes, got %d", ErrInvalidLength, byteSize, len(bytes))
+	}
+
+	swapped := swapToBADC(bytes)
+
+	var result T
+	switch byteSize {
+	case 1:
+		result = T(swapped[0])
+	case 2:
+		result = T(binary.BigEndian.Uint16(swapped))
+	case 4:
+		result = T(binary.BigEndian.Uint32(swapped))
+	case 8:
+		result = T(binary.BigEndian.Uint64(swapped))
+	}
+
+	return result, nil
+}
+
+// binaryToIntCDAB converts a binary string to an integer type using CDAB byte order.
+func binaryToIntCDAB[T integer](binStr string, byteSize int) (T, error) {
+	bytes, err := ParseBinary(binStr)
+	if err != nil {
+		return 0, err
+	}
+
+	if len(bytes) != byteSize {
+		return 0, fmt.Errorf("%w: expected %d bytes, got %d", ErrInvalidLength, byteSize, len(bytes))
+	}
+
+	swapped := swapToCDAB(bytes)
+
+	var result T
+	switch byteSize {
+	case 1:
+		result = T(swapped[0])
+	case 2:
+		result = T(binary.BigEndian.Uint16(swapped))
+	case 4:
+		result = T(binary.BigEndian.Uint32(swapped))
+	case 8:
+		result = T(binary.BigEndian.Uint64(swapped))
+	}
+
+	return result, nil
+}
+
+// intToBinaryBADC converts an integer type to a binary string using BADC byte order.
+func intToBinaryBADC[T integer](n T, byteSize int) string {
+	bytes := make([]byte, byteSize)
+
+	switch byteSize {
+	case 1:
+		bytes[0] = byte(n)
+	case 2:
+		binary.BigEndian.PutUint16(bytes, uint16(n))
+	case 4:
+		binary.BigEndian.PutUint32(bytes, uint32(n))
+	case 8:
+		binary.BigEndian.PutUint64(bytes, uint64(n))
+	}
+
+	swapped := swapToBADC(bytes)
+	return BytesToBinary(swapped)
+}
+
+// intToBinaryCDAB converts an integer type to a binary string using CDAB byte order.
+func intToBinaryCDAB[T integer](n T, byteSize int) string {
+	bytes := make([]byte, byteSize)
+
+	switch byteSize {
+	case 1:
+		bytes[0] = byte(n)
+	case 2:
+		binary.BigEndian.PutUint16(bytes, uint16(n))
+	case 4:
+		binary.BigEndian.PutUint32(bytes, uint32(n))
+	case 8:
+		binary.BigEndian.PutUint64(bytes, uint64(n))
+	}
+
+	swapped := swapToCDAB(bytes)
+	return BytesToBinary(swapped)
+}
+
 // ============================================================================
 // Signed Integer Conversions
 // ============================================================================
@@ -364,6 +608,66 @@ func Int32ToHexLE(n int32) string {
 // Int64ToHexLE converts an int64 to a hex string (little-endian).
 func Int64ToHexLE(n int64) string {
 	return intToHex(n, 8, binary.LittleEndian)
+}
+
+// HexToInt16BADC converts a hex string to an int16 (mid-big-endian/BADC).
+func HexToInt16BADC(hexStr string) (int16, error) {
+	return hexToIntBADC[int16](hexStr, 2)
+}
+
+// HexToInt32BADC converts a hex string to an int32 (mid-big-endian/BADC).
+func HexToInt32BADC(hexStr string) (int32, error) {
+	return hexToIntBADC[int32](hexStr, 4)
+}
+
+// HexToInt64BADC converts a hex string to an int64 (mid-big-endian/BADC).
+func HexToInt64BADC(hexStr string) (int64, error) {
+	return hexToIntBADC[int64](hexStr, 8)
+}
+
+// HexToInt16CDAB converts a hex string to an int16 (mid-little-endian/CDAB).
+func HexToInt16CDAB(hexStr string) (int16, error) {
+	return hexToIntCDAB[int16](hexStr, 2)
+}
+
+// HexToInt32CDAB converts a hex string to an int32 (mid-little-endian/CDAB).
+func HexToInt32CDAB(hexStr string) (int32, error) {
+	return hexToIntCDAB[int32](hexStr, 4)
+}
+
+// HexToInt64CDAB converts a hex string to an int64 (mid-little-endian/CDAB).
+func HexToInt64CDAB(hexStr string) (int64, error) {
+	return hexToIntCDAB[int64](hexStr, 8)
+}
+
+// Int16ToHexBADC converts an int16 to a hex string (mid-big-endian/BADC).
+func Int16ToHexBADC(n int16) string {
+	return intToHexBADC(n, 2)
+}
+
+// Int32ToHexBADC converts an int32 to a hex string (mid-big-endian/BADC).
+func Int32ToHexBADC(n int32) string {
+	return intToHexBADC(n, 4)
+}
+
+// Int64ToHexBADC converts an int64 to a hex string (mid-big-endian/BADC).
+func Int64ToHexBADC(n int64) string {
+	return intToHexBADC(n, 8)
+}
+
+// Int16ToHexCDAB converts an int16 to a hex string (mid-little-endian/CDAB).
+func Int16ToHexCDAB(n int16) string {
+	return intToHexCDAB(n, 2)
+}
+
+// Int32ToHexCDAB converts an int32 to a hex string (mid-little-endian/CDAB).
+func Int32ToHexCDAB(n int32) string {
+	return intToHexCDAB(n, 4)
+}
+
+// Int64ToHexCDAB converts an int64 to a hex string (mid-little-endian/CDAB).
+func Int64ToHexCDAB(n int64) string {
+	return intToHexCDAB(n, 8)
 }
 
 // ============================================================================
@@ -450,6 +754,66 @@ func Uint64ToHexLE(n uint64) string {
 	return intToHex(n, 8, binary.LittleEndian)
 }
 
+// HexToUint16BADC converts a hex string to a uint16 (mid-big-endian/BADC).
+func HexToUint16BADC(hexStr string) (uint16, error) {
+	return hexToIntBADC[uint16](hexStr, 2)
+}
+
+// HexToUint32BADC converts a hex string to a uint32 (mid-big-endian/BADC).
+func HexToUint32BADC(hexStr string) (uint32, error) {
+	return hexToIntBADC[uint32](hexStr, 4)
+}
+
+// HexToUint64BADC converts a hex string to a uint64 (mid-big-endian/BADC).
+func HexToUint64BADC(hexStr string) (uint64, error) {
+	return hexToIntBADC[uint64](hexStr, 8)
+}
+
+// HexToUint16CDAB converts a hex string to a uint16 (mid-little-endian/CDAB).
+func HexToUint16CDAB(hexStr string) (uint16, error) {
+	return hexToIntCDAB[uint16](hexStr, 2)
+}
+
+// HexToUint32CDAB converts a hex string to a uint32 (mid-little-endian/CDAB).
+func HexToUint32CDAB(hexStr string) (uint32, error) {
+	return hexToIntCDAB[uint32](hexStr, 4)
+}
+
+// HexToUint64CDAB converts a hex string to a uint64 (mid-little-endian/CDAB).
+func HexToUint64CDAB(hexStr string) (uint64, error) {
+	return hexToIntCDAB[uint64](hexStr, 8)
+}
+
+// Uint16ToHexBADC converts a uint16 to a hex string (mid-big-endian/BADC).
+func Uint16ToHexBADC(n uint16) string {
+	return intToHexBADC(n, 2)
+}
+
+// Uint32ToHexBADC converts a uint32 to a hex string (mid-big-endian/BADC).
+func Uint32ToHexBADC(n uint32) string {
+	return intToHexBADC(n, 4)
+}
+
+// Uint64ToHexBADC converts a uint64 to a hex string (mid-big-endian/BADC).
+func Uint64ToHexBADC(n uint64) string {
+	return intToHexBADC(n, 8)
+}
+
+// Uint16ToHexCDAB converts a uint16 to a hex string (mid-little-endian/CDAB).
+func Uint16ToHexCDAB(n uint16) string {
+	return intToHexCDAB(n, 2)
+}
+
+// Uint32ToHexCDAB converts a uint32 to a hex string (mid-little-endian/CDAB).
+func Uint32ToHexCDAB(n uint32) string {
+	return intToHexCDAB(n, 4)
+}
+
+// Uint64ToHexCDAB converts a uint64 to a hex string (mid-little-endian/CDAB).
+func Uint64ToHexCDAB(n uint64) string {
+	return intToHexCDAB(n, 8)
+}
+
 // ============================================================================
 // Float Conversions
 // ============================================================================
@@ -512,6 +876,66 @@ func Float32ToHexLE(f float32) string {
 func Float64ToHexLE(f float64) string {
 	bits := math.Float64bits(f)
 	return intToHex(bits, 8, binary.LittleEndian)
+}
+
+// HexToFloat32BADC converts a hex string to a float32 (mid-big-endian/BADC).
+func HexToFloat32BADC(hexStr string) (float32, error) {
+	bits, err := hexToIntBADC[uint32](hexStr, 4)
+	if err != nil {
+		return 0, err
+	}
+	return math.Float32frombits(bits), nil
+}
+
+// HexToFloat64BADC converts a hex string to a float64 (mid-big-endian/BADC).
+func HexToFloat64BADC(hexStr string) (float64, error) {
+	bits, err := hexToIntBADC[uint64](hexStr, 8)
+	if err != nil {
+		return 0, err
+	}
+	return math.Float64frombits(bits), nil
+}
+
+// HexToFloat32CDAB converts a hex string to a float32 (mid-little-endian/CDAB).
+func HexToFloat32CDAB(hexStr string) (float32, error) {
+	bits, err := hexToIntCDAB[uint32](hexStr, 4)
+	if err != nil {
+		return 0, err
+	}
+	return math.Float32frombits(bits), nil
+}
+
+// HexToFloat64CDAB converts a hex string to a float64 (mid-little-endian/CDAB).
+func HexToFloat64CDAB(hexStr string) (float64, error) {
+	bits, err := hexToIntCDAB[uint64](hexStr, 8)
+	if err != nil {
+		return 0, err
+	}
+	return math.Float64frombits(bits), nil
+}
+
+// Float32ToHexBADC converts a float32 to a hex string (mid-big-endian/BADC).
+func Float32ToHexBADC(f float32) string {
+	bits := math.Float32bits(f)
+	return intToHexBADC(bits, 4)
+}
+
+// Float64ToHexBADC converts a float64 to a hex string (mid-big-endian/BADC).
+func Float64ToHexBADC(f float64) string {
+	bits := math.Float64bits(f)
+	return intToHexBADC(bits, 8)
+}
+
+// Float32ToHexCDAB converts a float32 to a hex string (mid-little-endian/CDAB).
+func Float32ToHexCDAB(f float32) string {
+	bits := math.Float32bits(f)
+	return intToHexCDAB(bits, 4)
+}
+
+// Float64ToHexCDAB converts a float64 to a hex string (mid-little-endian/CDAB).
+func Float64ToHexCDAB(f float64) string {
+	bits := math.Float64bits(f)
+	return intToHexCDAB(bits, 8)
 }
 
 // ============================================================================
@@ -598,6 +1022,66 @@ func Int64ToBinaryLE(n int64) string {
 	return intToBinary(n, 8, binary.LittleEndian)
 }
 
+// BinaryToInt16BADC converts a binary string to an int16 (mid-big-endian/BADC).
+func BinaryToInt16BADC(binStr string) (int16, error) {
+	return binaryToIntBADC[int16](binStr, 2)
+}
+
+// BinaryToInt32BADC converts a binary string to an int32 (mid-big-endian/BADC).
+func BinaryToInt32BADC(binStr string) (int32, error) {
+	return binaryToIntBADC[int32](binStr, 4)
+}
+
+// BinaryToInt64BADC converts a binary string to an int64 (mid-big-endian/BADC).
+func BinaryToInt64BADC(binStr string) (int64, error) {
+	return binaryToIntBADC[int64](binStr, 8)
+}
+
+// BinaryToInt16CDAB converts a binary string to an int16 (mid-little-endian/CDAB).
+func BinaryToInt16CDAB(binStr string) (int16, error) {
+	return binaryToIntCDAB[int16](binStr, 2)
+}
+
+// BinaryToInt32CDAB converts a binary string to an int32 (mid-little-endian/CDAB).
+func BinaryToInt32CDAB(binStr string) (int32, error) {
+	return binaryToIntCDAB[int32](binStr, 4)
+}
+
+// BinaryToInt64CDAB converts a binary string to an int64 (mid-little-endian/CDAB).
+func BinaryToInt64CDAB(binStr string) (int64, error) {
+	return binaryToIntCDAB[int64](binStr, 8)
+}
+
+// Int16ToBinaryBADC converts an int16 to a binary string (mid-big-endian/BADC).
+func Int16ToBinaryBADC(n int16) string {
+	return intToBinaryBADC(n, 2)
+}
+
+// Int32ToBinaryBADC converts an int32 to a binary string (mid-big-endian/BADC).
+func Int32ToBinaryBADC(n int32) string {
+	return intToBinaryBADC(n, 4)
+}
+
+// Int64ToBinaryBADC converts an int64 to a binary string (mid-big-endian/BADC).
+func Int64ToBinaryBADC(n int64) string {
+	return intToBinaryBADC(n, 8)
+}
+
+// Int16ToBinaryCDAB converts an int16 to a binary string (mid-little-endian/CDAB).
+func Int16ToBinaryCDAB(n int16) string {
+	return intToBinaryCDAB(n, 2)
+}
+
+// Int32ToBinaryCDAB converts an int32 to a binary string (mid-little-endian/CDAB).
+func Int32ToBinaryCDAB(n int32) string {
+	return intToBinaryCDAB(n, 4)
+}
+
+// Int64ToBinaryCDAB converts an int64 to a binary string (mid-little-endian/CDAB).
+func Int64ToBinaryCDAB(n int64) string {
+	return intToBinaryCDAB(n, 8)
+}
+
 // ============================================================================
 // Binary String Conversions (Unsigned Integers)
 // ============================================================================
@@ -680,4 +1164,64 @@ func Uint32ToBinaryLE(n uint32) string {
 // Uint64ToBinaryLE converts a uint64 to a binary string (little-endian).
 func Uint64ToBinaryLE(n uint64) string {
 	return intToBinary(n, 8, binary.LittleEndian)
+}
+
+// BinaryToUint16BADC converts a binary string to a uint16 (mid-big-endian/BADC).
+func BinaryToUint16BADC(binStr string) (uint16, error) {
+	return binaryToIntBADC[uint16](binStr, 2)
+}
+
+// BinaryToUint32BADC converts a binary string to a uint32 (mid-big-endian/BADC).
+func BinaryToUint32BADC(binStr string) (uint32, error) {
+	return binaryToIntBADC[uint32](binStr, 4)
+}
+
+// BinaryToUint64BADC converts a binary string to a uint64 (mid-big-endian/BADC).
+func BinaryToUint64BADC(binStr string) (uint64, error) {
+	return binaryToIntBADC[uint64](binStr, 8)
+}
+
+// BinaryToUint16CDAB converts a binary string to a uint16 (mid-little-endian/CDAB).
+func BinaryToUint16CDAB(binStr string) (uint16, error) {
+	return binaryToIntCDAB[uint16](binStr, 2)
+}
+
+// BinaryToUint32CDAB converts a binary string to a uint32 (mid-little-endian/CDAB).
+func BinaryToUint32CDAB(binStr string) (uint32, error) {
+	return binaryToIntCDAB[uint32](binStr, 4)
+}
+
+// BinaryToUint64CDAB converts a binary string to a uint64 (mid-little-endian/CDAB).
+func BinaryToUint64CDAB(binStr string) (uint64, error) {
+	return binaryToIntCDAB[uint64](binStr, 8)
+}
+
+// Uint16ToBinaryBADC converts a uint16 to a binary string (mid-big-endian/BADC).
+func Uint16ToBinaryBADC(n uint16) string {
+	return intToBinaryBADC(n, 2)
+}
+
+// Uint32ToBinaryBADC converts a uint32 to a binary string (mid-big-endian/BADC).
+func Uint32ToBinaryBADC(n uint32) string {
+	return intToBinaryBADC(n, 4)
+}
+
+// Uint64ToBinaryBADC converts a uint64 to a binary string (mid-big-endian/BADC).
+func Uint64ToBinaryBADC(n uint64) string {
+	return intToBinaryBADC(n, 8)
+}
+
+// Uint16ToBinaryCDAB converts a uint16 to a binary string (mid-little-endian/CDAB).
+func Uint16ToBinaryCDAB(n uint16) string {
+	return intToBinaryCDAB(n, 2)
+}
+
+// Uint32ToBinaryCDAB converts a uint32 to a binary string (mid-little-endian/CDAB).
+func Uint32ToBinaryCDAB(n uint32) string {
+	return intToBinaryCDAB(n, 4)
+}
+
+// Uint64ToBinaryCDAB converts a uint64 to a binary string (mid-little-endian/CDAB).
+func Uint64ToBinaryCDAB(n uint64) string {
+	return intToBinaryCDAB(n, 8)
 }
