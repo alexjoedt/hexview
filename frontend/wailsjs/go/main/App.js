@@ -18,6 +18,10 @@ export function ConvertInt(arg1, arg2) {
   return window['go']['main']['App']['ConvertInt'](arg1, arg2);
 }
 
+export function ConvertIntAuto(arg1) {
+  return window['go']['main']['App']['ConvertIntAuto'](arg1);
+}
+
 export function ConvertModbusRegisters(arg1) {
   return window['go']['main']['App']['ConvertModbusRegisters'](arg1);
 }

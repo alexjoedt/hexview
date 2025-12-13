@@ -10,7 +10,6 @@
   
   // State
   let inputMode = 'hex'
-  let intType = 'int16'
   let inputValue = ''
   let result = null
   let modbusResult = null
@@ -42,17 +41,18 @@
       modbusResult = null
       error = null
     } else {
-      debouncedConvert(inputValue, inputMode, intType)
+      debouncedConvert(inputValue, inputMode)
     }
   }
   
-  function debouncedConvert(input, mode, type) {
+  function debouncedConvert(input, mode) {
     clearTimeout(debounceTimer)
     isLoading = true
     
     debounceTimer = setTimeout(async () => {
       try {
-        const convertResult = await convert(input, mode, type)
+        // Note: convert() no longer needs intType parameter for 'int' mode
+        const convertResult = await convert(input, mode)
         if (mode === 'modbus') {
           modbusResult = convertResult
           result = null
@@ -101,7 +101,6 @@
     
     <InputSection 
       bind:inputMode
-      bind:intType
       bind:inputValue
       bind:scaleFactor
       {error}

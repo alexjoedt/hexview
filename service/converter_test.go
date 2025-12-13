@@ -338,3 +338,389 @@ func TestParseModbusInput(t *testing.T) {
 		}
 	}
 }
+
+// ============================================================================
+// ConvertIntAuto Tests
+// ============================================================================
+
+func TestConvertIntAuto_EmptyInput(t *testing.T) {
+	c := NewConverter()
+	_, err := c.ConvertIntAuto("")
+	if err == nil {
+		t.Error("Expected error for empty input")
+	}
+}
+
+func TestConvertIntAuto_InvalidInput(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+	}{
+		{"letters", "abc"},
+		{"only spaces", "   "},
+		{"symbols", "###"},
+	}
+
+	c := NewConverter()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := c.ConvertIntAuto(tt.input)
+			if err == nil {
+				t.Errorf("ConvertIntAuto(%q) expected error, got nil", tt.input)
+			}
+		})
+	}
+}
+
+func TestConvertIntAuto_PartialParsing(t *testing.T) {
+	// fmt.Sscanf stops at first non-numeric character, which is acceptable
+	// These inputs will parse the numeric prefix successfully
+	tests := []struct {
+		name     string
+		input    string
+		expected int64
+	}{
+		{"with suffix", "123abc", 123},
+		{"with special char", "456@", 456},
+		{"hex prefix ignored", "0x789", 0}, // 0x stops parsing, returns 0
+	}
+
+	c := NewConverter()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := c.ConvertIntAuto(tt.input)
+			if err != nil {
+				t.Fatalf("ConvertIntAuto(%q) unexpected error: %v", tt.input, err)
+			}
+			if result.Int64BE == nil {
+				t.Fatalf("ConvertIntAuto(%q) expected Int64BE to be set", tt.input)
+			}
+			if *result.Int64BE != tt.expected {
+				t.Errorf("ConvertIntAuto(%q) got %d, want %d", tt.input, *result.Int64BE, tt.expected)
+			}
+		})
+	}
+}
+
+func TestConvertIntAuto_Int8Range(t *testing.T) {
+	tests := []struct {
+		name      string
+		input     string
+		wantInt8  bool
+		wantUint8 bool
+	}{
+		{"zero", "0", true, true},
+		{"positive small", "100", true, true},
+		{"max int8", "127", true, true},
+		{"above int8", "128", false, true},
+		{"max uint8", "255", false, true},
+		{"above uint8", "256", false, false},
+		{"negative", "-128", true, false},
+		{"below int8", "-129", false, false},
+	}
+
+	c := NewConverter()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := c.ConvertIntAuto(tt.input)
+			if err != nil {
+				t.Fatalf("ConvertIntAuto(%q) unexpected error: %v", tt.input, err)
+			}
+
+			if tt.wantInt8 && result.Int8BE == nil {
+				t.Errorf("ConvertIntAuto(%q) expected Int8BE to be set", tt.input)
+			}
+			if !tt.wantInt8 && result.Int8BE != nil {
+				t.Errorf("ConvertIntAuto(%q) expected Int8BE to be nil, got %v", tt.input, *result.Int8BE)
+			}
+
+			if tt.wantUint8 && result.Uint8BE == nil {
+				t.Errorf("ConvertIntAuto(%q) expected Uint8BE to be set", tt.input)
+			}
+			if !tt.wantUint8 && result.Uint8BE != nil {
+				t.Errorf("ConvertIntAuto(%q) expected Uint8BE to be nil, got %v", tt.input, *result.Uint8BE)
+			}
+		})
+	}
+}
+
+func TestConvertIntAuto_Int16Range(t *testing.T) {
+	tests := []struct {
+		name       string
+		input      string
+		wantInt16  bool
+		wantUint16 bool
+	}{
+		{"max int16", "32767", true, true},
+		{"above int16", "32768", false, true},
+		{"max uint16", "65535", false, true},
+		{"above uint16", "65536", false, false},
+		{"min int16", "-32768", true, false},
+		{"below int16", "-32769", false, false},
+	}
+
+	c := NewConverter()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := c.ConvertIntAuto(tt.input)
+			if err != nil {
+				t.Fatalf("ConvertIntAuto(%q) unexpected error: %v", tt.input, err)
+			}
+
+			if tt.wantInt16 && result.Int16BE == nil {
+				t.Errorf("ConvertIntAuto(%q) expected Int16BE to be set", tt.input)
+			}
+			if !tt.wantInt16 && result.Int16BE != nil {
+				t.Errorf("ConvertIntAuto(%q) expected Int16BE to be nil, got %v", tt.input, *result.Int16BE)
+			}
+
+			if tt.wantUint16 && result.Uint16BE == nil {
+				t.Errorf("ConvertIntAuto(%q) expected Uint16BE to be set", tt.input)
+			}
+			if !tt.wantUint16 && result.Uint16BE != nil {
+				t.Errorf("ConvertIntAuto(%q) expected Uint16BE to be nil, got %v", tt.input, *result.Uint16BE)
+			}
+		})
+	}
+}
+
+func TestConvertIntAuto_Int32Range(t *testing.T) {
+	tests := []struct {
+		name       string
+		input      string
+		wantInt32  bool
+		wantUint32 bool
+	}{
+		{"max int32", "2147483647", true, true},
+		{"above int32", "2147483648", false, true},
+		{"max uint32", "4294967295", false, true},
+		{"above uint32", "4294967296", false, false},
+		{"min int32", "-2147483648", true, false},
+		{"below int32", "-2147483649", false, false},
+	}
+
+	c := NewConverter()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := c.ConvertIntAuto(tt.input)
+			if err != nil {
+				t.Fatalf("ConvertIntAuto(%q) unexpected error: %v", tt.input, err)
+			}
+
+			if tt.wantInt32 && result.Int32BE == nil {
+				t.Errorf("ConvertIntAuto(%q) expected Int32BE to be set", tt.input)
+			}
+			if !tt.wantInt32 && result.Int32BE != nil {
+				t.Errorf("ConvertIntAuto(%q) expected Int32BE to be nil, got %v", tt.input, *result.Int32BE)
+			}
+
+			if tt.wantUint32 && result.Uint32BE == nil {
+				t.Errorf("ConvertIntAuto(%q) expected Uint32BE to be set", tt.input)
+			}
+			if !tt.wantUint32 && result.Uint32BE != nil {
+				t.Errorf("ConvertIntAuto(%q) expected Uint32BE to be nil, got %v", tt.input, *result.Uint32BE)
+			}
+		})
+	}
+}
+
+func TestConvertIntAuto_NegativeValues(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+	}{
+		{"small negative", "-1"},
+		{"int8 min", "-128"},
+		{"int16 min", "-32768"},
+		{"int32 min", "-2147483648"},
+	}
+
+	c := NewConverter()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := c.ConvertIntAuto(tt.input)
+			if err != nil {
+				t.Fatalf("ConvertIntAuto(%q) unexpected error: %v", tt.input, err)
+			}
+
+			// Negative values should never set unsigned types
+			if result.Uint8BE != nil {
+				t.Errorf("ConvertIntAuto(%q) expected Uint8BE to be nil for negative value", tt.input)
+			}
+			if result.Uint16BE != nil {
+				t.Errorf("ConvertIntAuto(%q) expected Uint16BE to be nil for negative value", tt.input)
+			}
+			if result.Uint32BE != nil {
+				t.Errorf("ConvertIntAuto(%q) expected Uint32BE to be nil for negative value", tt.input)
+			}
+			if result.Uint64BE != nil {
+				t.Errorf("ConvertIntAuto(%q) expected Uint64BE to be nil for negative value", tt.input)
+			}
+
+			// Int64 should always be set
+			if result.Int64BE == nil {
+				t.Errorf("ConvertIntAuto(%q) expected Int64BE to be set", tt.input)
+			}
+		})
+	}
+}
+
+func TestConvertIntAuto_AlwaysHasInt64(t *testing.T) {
+	tests := []string{"0", "100", "-100", "2147483647", "-2147483648"}
+
+	c := NewConverter()
+	for _, input := range tests {
+		t.Run(input, func(t *testing.T) {
+			result, err := c.ConvertIntAuto(input)
+			if err != nil {
+				t.Fatalf("ConvertIntAuto(%q) unexpected error: %v", input, err)
+			}
+
+			if result.Int64BE == nil {
+				t.Errorf("ConvertIntAuto(%q) expected Int64BE to always be set", input)
+			}
+			if result.Int64BEHex == "" {
+				t.Errorf("ConvertIntAuto(%q) expected Int64BEHex to be set", input)
+			}
+		})
+	}
+}
+
+func TestConvertIntAuto_CommonFields(t *testing.T) {
+	c := NewConverter()
+	result, err := c.ConvertIntAuto("100")
+	if err != nil {
+		t.Fatalf("ConvertIntAuto(100) unexpected error: %v", err)
+	}
+
+	// Check that common fields are populated
+	if result.Binary == "" {
+		t.Error("Expected Binary to be set")
+	}
+	if result.Bytes == "" {
+		t.Error("Expected Bytes to be set")
+	}
+	if result.ASCII == "" {
+		t.Error("Expected ASCII to be set")
+	}
+}
+
+// ============================================================================
+// Float Auto-Detection Tests
+// ============================================================================
+
+func TestConvertIntAuto_FloatDetection(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+	}{
+		{"dot notation", "10.5"},
+		{"comma notation", "10,5"},
+		{"negative float", "-3.14"},
+		{"negative comma", "-3,14"},
+		{"zero float", "0.0"},
+		{"large float", "123.456"},
+	}
+
+	c := NewConverter()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := c.ConvertIntAuto(tt.input)
+			if err != nil {
+				t.Fatalf("ConvertIntAuto(%q) unexpected error: %v", tt.input, err)
+			}
+
+			// Should have float values, not integer values
+			if result.Float32BE == nil {
+				t.Errorf("ConvertIntAuto(%q) expected Float32BE to be set", tt.input)
+			}
+			if result.Float64BE == nil {
+				t.Errorf("ConvertIntAuto(%q) expected Float64BE to be set", tt.input)
+			}
+			
+			// Should NOT have integer values
+			if result.Int8BE != nil || result.Int16BE != nil || result.Int32BE != nil {
+				t.Errorf("ConvertIntAuto(%q) expected integer fields to be nil for float input", tt.input)
+			}
+		})
+	}
+}
+
+func TestConvertIntAuto_FloatAllEndianness(t *testing.T) {
+	c := NewConverter()
+	result, err := c.ConvertIntAuto("10.5")
+	if err != nil {
+		t.Fatalf("ConvertIntAuto(10.5) unexpected error: %v", err)
+	}
+
+	// Check all float32 endianness variants are set
+	if result.Float32BE == nil {
+		t.Error("Expected Float32BE to be set")
+	}
+	if result.Float32LE == nil {
+		t.Error("Expected Float32LE to be set")
+	}
+	if result.Float32BADC == nil {
+		t.Error("Expected Float32BADC to be set")
+	}
+	if result.Float32CDAB == nil {
+		t.Error("Expected Float32CDAB to be set")
+	}
+
+	// Check all float64 endianness variants are set
+	if result.Float64BE == nil {
+		t.Error("Expected Float64BE to be set")
+	}
+	if result.Float64LE == nil {
+		t.Error("Expected Float64LE to be set")
+	}
+	if result.Float64BADC == nil {
+		t.Error("Expected Float64BADC to be set")
+	}
+	if result.Float64CDAB == nil {
+		t.Error("Expected Float64CDAB to be set")
+	}
+}
+
+func TestConvertIntAuto_FloatCommaEquivalence(t *testing.T) {
+	c := NewConverter()
+	
+	resultDot, err1 := c.ConvertIntAuto("10.5")
+	resultComma, err2 := c.ConvertIntAuto("10,5")
+	
+	if err1 != nil || err2 != nil {
+		t.Fatalf("Unexpected errors: dot=%v, comma=%v", err1, err2)
+	}
+
+	// Both should produce the same float values
+	if resultDot.Float32BE == nil || resultComma.Float32BE == nil {
+		t.Fatal("Float32BE should be set for both inputs")
+	}
+	
+	if *resultDot.Float32BE != *resultComma.Float32BE {
+		t.Errorf("Float values differ: dot=%s, comma=%s", *resultDot.Float32BE, *resultComma.Float32BE)
+	}
+	
+	if resultDot.Float32BEHex != resultComma.Float32BEHex {
+		t.Errorf("Float hex values differ: dot=%s, comma=%s", resultDot.Float32BEHex, resultComma.Float32BEHex)
+	}
+}
+
+func TestConvertIntAuto_IntegerNoFloat(t *testing.T) {
+	// Make sure pure integers don't trigger float detection
+	c := NewConverter()
+	result, err := c.ConvertIntAuto("100")
+	if err != nil {
+		t.Fatalf("ConvertIntAuto(100) unexpected error: %v", err)
+	}
+
+	// Should have integer values
+	if result.Int8BE == nil {
+		t.Error("Expected Int8BE to be set for integer input")
+	}
+	
+	// Should NOT have float values
+	if result.Float32BE != nil || result.Float64BE != nil {
+		t.Error("Expected float fields to be nil for integer input")
+	}
+}

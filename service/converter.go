@@ -373,6 +373,237 @@ func (c *Converter) ConvertInt(intInput string, intType string) (*models.Convers
 	}
 }
 
+// ConvertIntAuto performs auto-detection of integer and float types based on the input value.
+// It determines which integer types (int8/16/32/64, uint8/16/32/64) can represent
+// the given decimal value and populates the result with all compatible representations.
+// If the input contains a decimal point or comma, it's treated as a float.
+// Negative values automatically exclude unsigned types.
+func (c *Converter) ConvertIntAuto(intInput string) (*models.ConversionResult, error) {
+	if intInput == "" {
+		return nil, fmt.Errorf("empty input")
+	}
+
+	// Normalize comma to dot for float parsing (support both European and US notation)
+	normalizedInput := strings.ReplaceAll(intInput, ",", ".")
+
+	// Check if input contains a decimal point (float)
+	if strings.Contains(normalizedInput, ".") {
+		return c.convertFloatAuto(normalizedInput)
+	}
+
+	result := &models.ConversionResult{}
+
+	// Parse as int64 to determine value range
+	var val64 int64
+	_, err := fmt.Sscanf(intInput, "%d", &val64)
+	if err != nil {
+		return nil, fmt.Errorf("invalid decimal value: %w", err)
+	}
+
+	// Helper function to set binary/bytes/ASCII from hex string (use first valid representation)
+	setCommonFields := func(hexStr string) {
+		if result.Binary == "" {
+			bytes, _ := convert.HexToBytes(hexStr)
+			result.Binary = convert.BytesToBinary(bytes)
+			result.Bytes = hexStr
+			result.ASCII = bytesToASCII(bytes)
+		}
+	}
+
+	// Check int8 (-128 to 127)
+	if val64 >= -128 && val64 <= 127 {
+		val := int8(val64)
+		hexStr := convert.Int8ToHex(val)
+		setCommonFields(hexStr)
+		result.Int8BE = &val
+		result.Int8BEHex = hexStr
+	}
+
+	// Check uint8 (0 to 255)
+	if val64 >= 0 && val64 <= 255 {
+		val := uint8(val64)
+		hexStr := convert.Uint8ToHex(val)
+		if result.Binary == "" {
+			setCommonFields(hexStr)
+		}
+		result.Uint8BE = &val
+		result.Uint8BEHex = hexStr
+	}
+
+	// Check int16 (-32768 to 32767)
+	if val64 >= -32768 && val64 <= 32767 {
+		val := int16(val64)
+		hexStrBE := convert.Int16ToHex(val)
+		hexStrLE := convert.Int16ToHexLE(val)
+		setCommonFields(hexStrBE)
+		result.Int16BE = &val
+		result.Int16BEHex = hexStrBE
+		if vLE, err := convert.HexToInt16LE(hexStrLE); err == nil {
+			result.Int16LE = &vLE
+			result.Int16LEHex = hexStrLE
+		}
+	}
+
+	// Check uint16 (0 to 65535)
+	if val64 >= 0 && val64 <= 65535 {
+		val := uint16(val64)
+		hexStrBE := convert.Uint16ToHex(val)
+		hexStrLE := convert.Uint16ToHexLE(val)
+		if result.Binary == "" {
+			setCommonFields(hexStrBE)
+		}
+		result.Uint16BE = &val
+		result.Uint16BEHex = hexStrBE
+		if vLE, err := convert.HexToUint16LE(hexStrLE); err == nil {
+			result.Uint16LE = &vLE
+			result.Uint16LEHex = hexStrLE
+		}
+	}
+
+	// Check int32 (-2147483648 to 2147483647)
+	if val64 >= -2147483648 && val64 <= 2147483647 {
+		val := int32(val64)
+		hexStrBE := convert.Int32ToHex(val)
+		hexStrLE := convert.Int32ToHexLE(val)
+		setCommonFields(hexStrBE)
+		result.Int32BE = &val
+		result.Int32BEHex = hexStrBE
+		if vLE, err := convert.HexToInt32LE(hexStrLE); err == nil {
+			result.Int32LE = &vLE
+			result.Int32LEHex = hexStrLE
+		}
+	}
+
+	// Check uint32 (0 to 4294967295)
+	if val64 >= 0 && val64 <= 4294967295 {
+		val := uint32(val64)
+		hexStrBE := convert.Uint32ToHex(val)
+		hexStrLE := convert.Uint32ToHexLE(val)
+		if result.Binary == "" {
+			setCommonFields(hexStrBE)
+		}
+		result.Uint32BE = &val
+		result.Uint32BEHex = hexStrBE
+		if vLE, err := convert.HexToUint32LE(hexStrLE); err == nil {
+			result.Uint32LE = &vLE
+			result.Uint32LEHex = hexStrLE
+		}
+	}
+
+	// Always include int64 (if parsed successfully)
+	result.Int64BE = &val64
+	hexStrBE := convert.Int64ToHex(val64)
+	hexStrLE := convert.Int64ToHexLE(val64)
+	setCommonFields(hexStrBE)
+	result.Int64BEHex = hexStrBE
+	if vLE, err := convert.HexToInt64LE(hexStrLE); err == nil {
+		result.Int64LE = &vLE
+		result.Int64LEHex = hexStrLE
+	}
+
+	// Check uint64 (0 to 9223372036854775807 - limited by int64 parsing)
+	// For values beyond int64 max, we'd need different parsing approach
+	if val64 >= 0 {
+		val := uint64(val64)
+		hexStrBE := convert.Uint64ToHex(val)
+		hexStrLE := convert.Uint64ToHexLE(val)
+		result.Uint64BE = &val
+		result.Uint64BEHex = hexStrBE
+		if vLE, err := convert.HexToUint64LE(hexStrLE); err == nil {
+			result.Uint64LE = &vLE
+			result.Uint64LEHex = hexStrLE
+		}
+	}
+
+	return result, nil
+}
+
+// convertFloatAuto is a helper function that handles float value auto-detection.
+// It populates float32 and float64 representations in all endianness variants.
+func (c *Converter) convertFloatAuto(floatInput string) (*models.ConversionResult, error) {
+	result := &models.ConversionResult{}
+
+	// Parse as float64 first
+	var val64 float64
+	_, err := fmt.Sscanf(floatInput, "%f", &val64)
+	if err != nil {
+		return nil, fmt.Errorf("invalid float value: %w", err)
+	}
+
+	// Convert to float32 to check if it fits without precision loss
+	val32 := float32(val64)
+
+	// Helper function to set binary/bytes/ASCII from hex string (use first valid representation)
+	setCommonFields := func(hexStr string) {
+		if result.Binary == "" {
+			bytes, _ := convert.HexToBytes(hexStr)
+			result.Binary = convert.BytesToBinary(bytes)
+			result.Bytes = hexStr
+			result.ASCII = bytesToASCII(bytes)
+		}
+	}
+
+	// Float32 conversions (all endianness variants)
+	hexStrBE32 := convert.Float32ToHex(val32)
+	setCommonFields(hexStrBE32)
+	formatted32 := formatFloat32(val32)
+	result.Float32BE = &formatted32
+	result.Float32BEHex = hexStrBE32
+
+	hexStrLE32 := convert.Float32ToHexLE(val32)
+	if vLE, err := convert.HexToFloat32LE(hexStrLE32); err == nil {
+		formattedLE := formatFloat32(vLE)
+		result.Float32LE = &formattedLE
+		result.Float32LEHex = hexStrLE32
+	}
+
+	hexStrBADC32 := convert.Float32ToHexBADC(val32)
+	if vBADC, err := convert.HexToFloat32BADC(hexStrBADC32); err == nil {
+		formattedBADC := formatFloat32(vBADC)
+		result.Float32BADC = &formattedBADC
+		result.Float32BADCHex = hexStrBADC32
+	}
+
+	hexStrCDAB32 := convert.Float32ToHexCDAB(val32)
+	if vCDAB, err := convert.HexToFloat32CDAB(hexStrCDAB32); err == nil {
+		formattedCDAB := formatFloat32(vCDAB)
+		result.Float32CDAB = &formattedCDAB
+		result.Float32CDABHex = hexStrCDAB32
+	}
+
+	// Float64 conversions (all endianness variants)
+	hexStrBE64 := convert.Float64ToHex(val64)
+	if result.Binary == "" {
+		setCommonFields(hexStrBE64)
+	}
+	formatted64 := formatFloat64(val64)
+	result.Float64BE = &formatted64
+	result.Float64BEHex = hexStrBE64
+
+	hexStrLE64 := convert.Float64ToHexLE(val64)
+	if vLE, err := convert.HexToFloat64LE(hexStrLE64); err == nil {
+		formattedLE := formatFloat64(vLE)
+		result.Float64LE = &formattedLE
+		result.Float64LEHex = hexStrLE64
+	}
+
+	hexStrBADC64 := convert.Float64ToHexBADC(val64)
+	if vBADC, err := convert.HexToFloat64BADC(hexStrBADC64); err == nil {
+		formattedBADC := formatFloat64(vBADC)
+		result.Float64BADC = &formattedBADC
+		result.Float64BADCHex = hexStrBADC64
+	}
+
+	hexStrCDAB64 := convert.Float64ToHexCDAB(val64)
+	if vCDAB, err := convert.HexToFloat64CDAB(hexStrCDAB64); err == nil {
+		formattedCDAB := formatFloat64(vCDAB)
+		result.Float64CDAB = &formattedCDAB
+		result.Float64CDABHex = hexStrCDAB64
+	}
+
+	return result, nil
+}
+
 // ConvertBinary performs all possible conversions on binary input.
 func (c *Converter) ConvertBinary(binaryInput string) (*models.ConversionResult, error) {
 	if binaryInput == "" {

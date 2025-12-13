@@ -1,8 +1,7 @@
 <script>
-  import { INPUT_MODES, INT_TYPE_OPTIONS } from '../lib/constants.js'
+  import { INPUT_MODES } from '../lib/constants.js'
   
   export let inputMode = 'hex'
-  export let intType = 'int16'
   export let inputValue = ''
   export let error = null
   export let onClear
@@ -31,7 +30,7 @@
     ? 'Enter binary (e.g., 01001000 01100101)'
     : inputMode === 'modbus'
     ? 'Enter registers: hex (1234 5678), decimal (d1000 d2000), or mixed'
-    : 'Enter integer value'
+    : 'Enter decimal (e.g., 100, 10.5, or 10,2)'
     
   $: isModbus = inputMode === 'modbus'
 </script>
@@ -48,14 +47,6 @@
         {mode.label}
       </button>
     {/each}
-    
-    {#if inputMode === 'int'}
-      <select class="type-selector" bind:value={intType}>
-        {#each INT_TYPE_OPTIONS as option}
-          <option value={option.value}>{option.label}</option>
-        {/each}
-      </select>
-    {/if}
     
     {#if isModbus}
       <div class="scale-input">
@@ -153,30 +144,6 @@
   .mode-btn.modbus {
     background: var(--color-int-unsigned);
     border-color: var(--color-int-unsigned);
-  }
-
-  .type-selector {
-    padding: var(--spacing-xs) var(--spacing-sm);
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-sm);
-    color: var(--text-primary);
-    font-size: 11px;
-    font-weight: 600;
-    font-family: var(--font-mono);
-    cursor: pointer;
-    transition: all 0.15s;
-    min-width: 80px;
-  }
-
-  .type-selector:hover {
-    background: var(--bg-hover);
-    border-color: var(--text-tertiary);
-  }
-
-  .type-selector:focus {
-    outline: none;
-    border-color: var(--color-int-signed);
   }
 
   .scale-input {

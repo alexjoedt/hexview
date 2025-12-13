@@ -40,6 +40,14 @@ func (a *App) ConvertInt(intInput string, intType string) (*models.ConversionRes
 	return a.converter.ConvertInt(intInput, intType)
 }
 
+// ConvertIntAuto performs auto-detection of integer types from decimal input.
+// It determines all compatible integer types based on the value range and returns
+// all valid representations (e.g., int8, uint8, int16, etc.) in a single result.
+// This method is exported to the frontend via Wails bindings.
+func (a *App) ConvertIntAuto(intInput string) (*models.ConversionResult, error) {
+	return a.converter.ConvertIntAuto(intInput)
+}
+
 // ConvertBinary performs all possible conversions on binary input.
 // This method is exported to the frontend via Wails bindings.
 func (a *App) ConvertBinary(binaryInput string) (*models.ConversionResult, error) {

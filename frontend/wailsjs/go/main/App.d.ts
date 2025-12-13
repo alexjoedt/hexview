@@ -10,4 +10,6 @@ export function ConvertHex(arg1:string):Promise<models.ConversionResult>;
 
 export function ConvertInt(arg1:string,arg2:string):Promise<models.ConversionResult>;
 
+export function ConvertIntAuto(arg1:string):Promise<models.ConversionResult>;
+
 export function ConvertModbusRegisters(arg1:string):Promise<models.ModbusResult>;

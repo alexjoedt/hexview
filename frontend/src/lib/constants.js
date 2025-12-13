@@ -35,7 +35,7 @@ export const INT_TYPE_OPTIONS = [
 // Input mode options
 export const INPUT_MODES = [
   { value: 'hex', label: 'Hex' },
-  { value: 'int', label: 'Integer' },
+  { value: 'int', label: 'Decimal' },
   { value: 'binary', label: 'Binary' },
   { value: 'modbus', label: 'Modbus' }
 ]

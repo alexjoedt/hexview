@@ -1,7 +1,7 @@
 /**
  * Wails API wrapper functions
  */
-import { ConvertHex, ConvertInt, ConvertBinary, ConvertModbusRegisters } from '../../wailsjs/go/main/App.js'
+import { ConvertHex, ConvertInt, ConvertIntAuto, ConvertBinary, ConvertModbusRegisters } from '../../wailsjs/go/main/App.js'
 
 /**
  * Convert hex string to all formats
@@ -11,10 +11,17 @@ export async function convertHex(hexInput) {
 }
 
 /**
- * Convert integer to all formats
+ * Convert integer to all formats (legacy - explicit type)
  */
 export async function convertInt(intInput, intType) {
   return await ConvertInt(intInput, intType)
+}
+
+/**
+ * Convert integer with auto-detection of compatible types
+ */
+export async function convertIntAuto(intInput) {
+  return await ConvertIntAuto(intInput)
 }
 
 /**
@@ -41,7 +48,8 @@ export async function convert(inputValue, inputMode, intType) {
     case 'binary':
       return await convertBinary(inputValue)
     case 'int':
-      return await convertInt(inputValue, intType)
+      // Use auto-detection for integer mode (intType parameter ignored)
+      return await convertIntAuto(inputValue)
     case 'modbus':
       return await convertModbus(inputValue)
     default:
