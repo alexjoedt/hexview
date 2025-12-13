@@ -8,22 +8,35 @@ Hexview is a **lightweight desktop tool for network engineers** to quickly conve
 - **Desktop native**: Standalone app without browser overhead
 
 **Tech stack:**
-- **Backend**: Go (Wails v2 framework) with a comprehensive `convert` package for hex/binary conversions
+- **Backend**: Go (Wails v2 framework) with layered architecture
 - **Frontend**: Svelte with Vite for the UI
 - **Bridge**: Wails automatically generates TypeScript bindings from Go methods (see `frontend/wailsjs/go/`)
 
-## Architecture
+## Architecture (3-Layer Design)
 
-### Backend Structure
-- `main.go`: Wails application entry point, embeds frontend assets
-- `app.go`: Application struct with context and exported methods (e.g., `Greet`)
-- `convert/`: Standalone package for hex/binary conversions (can be used independently)
+### 1. Wails App Layer (`app.go`)
+Thin glue layer exposing Go methods to frontend. All exported methods become JS functions via Wails bindings.
+```go
+func (a *App) ConvertHex(hexInput string) (*models.ConversionResult, error)
+```
+
+### 2. Service Layer (`service/converter.go`)
+Business logic that orchestrates conversions and builds comprehensive result structures. Calls `convert` package functions and assembles `models.ConversionResult` with all endianness variants (BE, LE, BADC, CDAB).
+
+### 3. Convert Package (`convert/`)
+Pure conversion algorithms. **Can be used standalone** (no Wails dependency). Provides:
+- Flexible hex parsing (accepts `0x`, spaces, colons, commas)
+- Generic functions with type constraints: `hexToInt[T integer]()`
+- Endianness naming: default BE, `*LE()` suffix for little-endian, `*BADC()` and `*CDAB()` for mid-endian
+
+### Data Flow
+Frontend → `frontend/wailsjs/go/main/App.js` (auto-generated) → `app.go` → `service/converter.go` → `convert/` → `models.ConversionResult` → Frontend
 
 ### Frontend Integration
-- **Auto-generated bindings**: `frontend/wailsjs/go/main/App.js` provides typed JS functions for Go methods
-- **DO NOT EDIT** generated files in `frontend/wailsjs/` - they regenerate on build
-- Import Go functions: `import {Greet} from '../wailsjs/go/main/App.js'`
-- Call Go from Svelte: `Greet(name).then(result => ...)`
+- **Auto-generated bindings**: `frontend/wailsjs/go/main/App.js` provides typed JS functions
+- **DO NOT EDIT** generated files in `frontend/wailsjs/` - regenerate on build
+- Wrapper layer: `frontend/src/lib/api.js` provides app-specific abstractions over raw bindings
+- Debounced conversion: App.svelte uses 300ms debounce for real-time conversion
 
 ## Development Workflow
 
@@ -116,26 +129,33 @@ npm run build       # Production build
 ## Common Tasks
 
 ### Adding New Conversion Function
+1. **Add logic to `service/converter.go`**: Implement conversion logic, call `convert` package functions
+2. **Extend `models/result.go`**: Add new fields to `ConversionResult` (use pointers for optional values)
+3. **Update `app.go`** (if needed): Add new exported method for frontend
+4. **Rebuild**: `wails dev` auto-regenerates TypeScript bindings
+5. **Frontend**: Import from `wailsjs/go/main/App.js` and update Svelte components
+
+**Example**: Adding a new Modbus register conversion required:
+- New `ModbusResult` struct in `models/result.go` with fields for registers, combined 32/64-bit values
+- `ConvertModbusRegisters()` method in both `service/converter.go` and `app.go`
+- Frontend component `ModbusView.svelte` consuming the new API
+
 ### Updating Frontend UI
-1. Edit `frontend/src/App.svelte` for UI changes
-2. Call Go functions via imported bindings
-3. Use `wails dev` for live reload
-4. Generated bindings auto-update on save
+1. Edit components in `frontend/src/components/` (tables, input sections)
+2. Main app logic in `frontend/src/App.svelte`
+3. Use `wails dev` for live reload (backend + frontend hot reload)
+4. Theme handling: Uses localStorage + `prefers-color-scheme` (see App.svelte lines 22-30)
 
 **UX Principles for Network Engineers:**
-- Minimize clicks: Auto-focus inputs, keyboard shortcuts for common actions
-- Instant feedback: Show conversions in real-time as user types
-- Forgiving input: Accept various formats (0x, spaces, colons) without validation errors
-- Clear output: Display results in multiple formats simultaneously
-- Copy-friendly: Easy to copy results for pasting into other tools
-### Updating Frontend UI
-1. Edit `frontend/src/App.svelte` for UI changes
-2. Call Go functions via imported bindings
-3. Use `wails dev` for live reload
-4. Generated bindings auto-update on save
+- Debounced conversion (300ms): Real-time feedback without excessive backend calls
+- Forgiving input: Parse multiple hex formats in `convert.ParseHex()`
+- Copy-friendly: CopyButton component with toast notifications
+- Multi-format display: Show BE, LE, BADC, CDAB endianness simultaneously
 
 ### Building for Release
 ```bash
-wails build              # Creates platform-specific binary
-wails build -platform    # Cross-compile (darwin, windows, linux)
+wails build                          # Current platform
+wails build -platform darwin/universal  # macOS universal binary
+task build:prod                      # Stripped debug symbols (-w -s)
 ```
+See `Taskfile.yml` for cross-platform build targets (requires native platform or CI/CD).
