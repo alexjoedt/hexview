@@ -136,7 +136,7 @@
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-md);
+    gap: var(--spacing-sm);
   }
 
   .results::-webkit-scrollbar {

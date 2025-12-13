@@ -81,12 +81,12 @@
   }
 
   .table-title {
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.05em;
     color: var(--text-secondary);
-    padding: var(--spacing-sm) var(--spacing-md);
+    padding: var(--spacing-xs) var(--spacing-sm);
     background: var(--bg-secondary);
     border-bottom: 1px solid var(--border-color);
   }
@@ -108,11 +108,11 @@
   th {
     text-align: left;
     font-weight: 600;
-    font-size: 11px;
+    font-size: 10px;
     text-transform: uppercase;
     letter-spacing: 0.03em;
     color: var(--text-secondary);
-    padding: var(--spacing-sm) var(--spacing-md);
+    padding: var(--spacing-xs) var(--spacing-sm);
     border-bottom: 1px solid var(--border-color);
   }
 
@@ -134,7 +134,7 @@
   }
 
   td {
-    padding: var(--spacing-sm) var(--spacing-md);
+    padding: var(--spacing-xs) var(--spacing-sm);
   }
 
   .type-cell {

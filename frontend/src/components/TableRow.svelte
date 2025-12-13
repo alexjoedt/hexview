@@ -69,7 +69,7 @@
   }
 
   td {
-    padding: var(--spacing-sm) var(--spacing-md);
+    padding: var(--spacing-xs) var(--spacing-sm);
   }
 
   .type-cell {
