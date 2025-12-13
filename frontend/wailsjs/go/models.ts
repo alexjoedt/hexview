@@ -1,4 +1,4 @@
-export namespace main {
+export namespace models {
 	
 	export class ConversionResult {
 	    int8BE?: number;
