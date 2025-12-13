@@ -19,8 +19,14 @@
   let debounceTimer = null
   let scaleFactor = 1
   
-  // Theme state
-  let darkMode = window.matchMedia('(prefers-color-scheme: dark)').matches
+  // Theme state - load from localStorage or fall back to system preference
+  let darkMode = (() => {
+    const saved = localStorage.getItem('hexview-theme')
+    if (saved !== null) {
+      return saved === 'dark'
+    }
+    return window.matchMedia('(prefers-color-scheme: dark)').matches
+  })()
   
   // Expert mode state
   let expertMode = false
@@ -67,6 +73,8 @@
   
   function toggleTheme() {
     darkMode = !darkMode
+    // Save theme preference to localStorage
+    localStorage.setItem('hexview-theme', darkMode ? 'dark' : 'light')
   }
   
   function handleCopy(success) {
