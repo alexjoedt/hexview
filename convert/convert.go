@@ -235,18 +235,20 @@ func hexToInt[T integer](hexStr string, byteSize int, endian binary.ByteOrder) (
 }
 
 // intToHex is a generic helper for converting integer types to hex strings.
+// Always returns hex in big-endian format for display consistency.
 func intToHex[T integer](n T, byteSize int, endian binary.ByteOrder) string {
 	bytes := make([]byte, byteSize)
 
+	// Always write as big-endian for hex display
 	switch byteSize {
 	case 1:
 		bytes[0] = byte(n)
 	case 2:
-		endian.PutUint16(bytes, uint16(n))
+		binary.BigEndian.PutUint16(bytes, uint16(n))
 	case 4:
-		endian.PutUint32(bytes, uint32(n))
+		binary.BigEndian.PutUint32(bytes, uint32(n))
 	case 8:
-		endian.PutUint64(bytes, uint64(n))
+		binary.BigEndian.PutUint64(bytes, uint64(n))
 	}
 
 	return hex.EncodeToString(bytes)
@@ -298,8 +300,8 @@ func intToBinary[T integer](n T, byteSize int, endian binary.ByteOrder) string {
 
 // swapToBADC swaps bytes to Mid-Big Endian (BADC) byte order.
 // For 2-byte values: equivalent to big-endian (no swap needed)
-// For 4-byte values: swap word pairs [A,B,C,D] → [B,A,D,C]
-// For 8-byte values: swap 32-bit halves [A,B,C,D,E,F,G,H] → [E,F,G,H,A,B,C,D]
+// For 4-byte values: swap bytes within each 16-bit word [A,B,C,D] → [B,A,D,C]
+// For 8-byte values: swap bytes within each 16-bit word [A,B,C,D,E,F,G,H] → [B,A,D,C,F,E,H,G]
 func swapToBADC(bytes []byte) []byte {
 	result := make([]byte, len(bytes))
 	copy(result, bytes)
@@ -313,9 +315,11 @@ func swapToBADC(bytes []byte) []byte {
 		result[0], result[1] = bytes[1], bytes[0]
 		result[2], result[3] = bytes[3], bytes[2]
 	case 8:
-		// Swap 32-bit words
-		result[0], result[1], result[2], result[3] = bytes[4], bytes[5], bytes[6], bytes[7]
-		result[4], result[5], result[6], result[7] = bytes[0], bytes[1], bytes[2], bytes[3]
+		// Swap bytes within each 16-bit word
+		result[0], result[1] = bytes[1], bytes[0]
+		result[2], result[3] = bytes[3], bytes[2]
+		result[4], result[5] = bytes[5], bytes[4]
+		result[6], result[7] = bytes[7], bytes[6]
 	}
 
 	return result
@@ -421,9 +425,11 @@ func hexToIntCDAB[T integer](hexStr string, byteSize int) (T, error) {
 }
 
 // intToHexBADC is a helper for converting integer types to hex strings using BADC byte order.
+// Returns hex in big-endian format to show the numeric value.
 func intToHexBADC[T integer](n T, byteSize int) string {
 	bytes := make([]byte, byteSize)
 
+	// Write as big-endian for hex display (value was already read with BADC interpretation)
 	switch byteSize {
 	case 1:
 		bytes[0] = byte(n)
@@ -435,15 +441,15 @@ func intToHexBADC[T integer](n T, byteSize int) string {
 		binary.BigEndian.PutUint64(bytes, uint64(n))
 	}
 
-	// Swap to BADC order
-	swapped := swapToBADC(bytes)
-	return hex.EncodeToString(swapped)
+	return hex.EncodeToString(bytes)
 }
 
 // intToHexCDAB is a helper for converting integer types to hex strings using CDAB byte order.
+// Returns hex in big-endian format to show the numeric value.
 func intToHexCDAB[T integer](n T, byteSize int) string {
 	bytes := make([]byte, byteSize)
 
+	// Write as big-endian for hex display (value was already read with CDAB interpretation)
 	switch byteSize {
 	case 1:
 		bytes[0] = byte(n)
@@ -455,9 +461,7 @@ func intToHexCDAB[T integer](n T, byteSize int) string {
 		binary.BigEndian.PutUint64(bytes, uint64(n))
 	}
 
-	// Swap to CDAB order
-	swapped := swapToCDAB(bytes)
-	return hex.EncodeToString(swapped)
+	return hex.EncodeToString(bytes)
 }
 
 // binaryToIntBADC converts a binary string to an integer type using BADC byte order.

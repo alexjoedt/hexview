@@ -815,12 +815,14 @@ func TestAllIntToHexFunctions(t *testing.T) {
 	if Int16ToHex(1000) != "03e8" {
 		t.Error("Int16ToHex failed")
 	}
-	if Int16ToHexLE(1000) != "e803" {
+	// After fix: hex always shows big-endian representation of value
+	if Int16ToHexLE(1000) != "03e8" {
 		t.Error("Int16ToHexLE failed")
 	}
 
 	// Test Int32 variants
-	if Int32ToHexLE(1000) != "e8030000" {
+	// After fix: hex always shows big-endian representation of value
+	if Int32ToHexLE(1000) != "000003e8" {
 		t.Error("Int32ToHexLE failed")
 	}
 
@@ -828,7 +830,8 @@ func TestAllIntToHexFunctions(t *testing.T) {
 	if Int64ToHex(1000) != "00000000000003e8" {
 		t.Error("Int64ToHex failed")
 	}
-	if Int64ToHexLE(1000) != "e803000000000000" {
+	// After fix: hex always shows big-endian representation of value
+	if Int64ToHexLE(1000) != "00000000000003e8" {
 		t.Error("Int64ToHexLE failed")
 	}
 }
@@ -843,7 +846,8 @@ func TestAllUintToHexFunctions(t *testing.T) {
 	}
 
 	// Test Uint16
-	if Uint16ToHexLE(1000) != "e803" {
+	// After fix: hex always shows big-endian representation of value
+	if Uint16ToHexLE(1000) != "03e8" {
 		t.Error("Uint16ToHexLE failed")
 	}
 
@@ -851,12 +855,14 @@ func TestAllUintToHexFunctions(t *testing.T) {
 	if Uint32ToHex(1000) != "000003e8" {
 		t.Error("Uint32ToHex failed")
 	}
-	if Uint32ToHexLE(1000) != "e8030000" {
+	// After fix: hex always shows big-endian representation of value
+	if Uint32ToHexLE(1000) != "000003e8" {
 		t.Error("Uint32ToHexLE failed")
 	}
 
 	// Test Uint64
-	if Uint64ToHexLE(1000) != "e803000000000000" {
+	// After fix: hex always shows big-endian representation of value
+	if Uint64ToHexLE(1000) != "00000000000003e8" {
 		t.Error("Uint64ToHexLE failed")
 	}
 }
@@ -915,8 +921,9 @@ func TestFloatLittleEndian(t *testing.T) {
 	}
 
 	hex32 := Float32ToHexLE(1.0)
-	if hex32 != "0000803f" {
-		t.Errorf("Float32ToHexLE failed: got %v, want 0000803f", hex32)
+	// After fix: hex always shows big-endian representation of value
+	if hex32 != "3f800000" {
+		t.Errorf("Float32ToHexLE failed: got %v, want 3f800000", hex32)
 	}
 
 	// Float64LE
@@ -926,8 +933,9 @@ func TestFloatLittleEndian(t *testing.T) {
 	}
 
 	hex64 := Float64ToHexLE(1.0)
-	if hex64 != "000000000000f03f" {
-		t.Errorf("Float64ToHexLE failed: got %v, want 000000000000f03f", hex64)
+	// After fix: hex always shows big-endian representation of value
+	if hex64 != "3ff0000000000000" {
+		t.Errorf("Float64ToHexLE failed: got %v, want 3ff0000000000000", hex64)
 	}
 }
 
