@@ -235,18 +235,20 @@ func hexToInt[T integer](hexStr string, byteSize int, endian binary.ByteOrder) (
 }
 
 // intToHex is a generic helper for converting integer types to hex strings.
+// Always returns hex in big-endian format for display consistency.
 func intToHex[T integer](n T, byteSize int, endian binary.ByteOrder) string {
 	bytes := make([]byte, byteSize)
 
+	// Always write as big-endian for hex display
 	switch byteSize {
 	case 1:
 		bytes[0] = byte(n)
 	case 2:
-		endian.PutUint16(bytes, uint16(n))
+		binary.BigEndian.PutUint16(bytes, uint16(n))
 	case 4:
-		endian.PutUint32(bytes, uint32(n))
+		binary.BigEndian.PutUint32(bytes, uint32(n))
 	case 8:
-		endian.PutUint64(bytes, uint64(n))
+		binary.BigEndian.PutUint64(bytes, uint64(n))
 	}
 
 	return hex.EncodeToString(bytes)
@@ -421,9 +423,11 @@ func hexToIntCDAB[T integer](hexStr string, byteSize int) (T, error) {
 }
 
 // intToHexBADC is a helper for converting integer types to hex strings using BADC byte order.
+// Returns hex in big-endian format to show the numeric value.
 func intToHexBADC[T integer](n T, byteSize int) string {
 	bytes := make([]byte, byteSize)
 
+	// Write as big-endian for hex display (value was already read with BADC interpretation)
 	switch byteSize {
 	case 1:
 		bytes[0] = byte(n)
@@ -435,15 +439,15 @@ func intToHexBADC[T integer](n T, byteSize int) string {
 		binary.BigEndian.PutUint64(bytes, uint64(n))
 	}
 
-	// Swap to BADC order
-	swapped := swapToBADC(bytes)
-	return hex.EncodeToString(swapped)
+	return hex.EncodeToString(bytes)
 }
 
 // intToHexCDAB is a helper for converting integer types to hex strings using CDAB byte order.
+// Returns hex in big-endian format to show the numeric value.
 func intToHexCDAB[T integer](n T, byteSize int) string {
 	bytes := make([]byte, byteSize)
 
+	// Write as big-endian for hex display (value was already read with CDAB interpretation)
 	switch byteSize {
 	case 1:
 		bytes[0] = byte(n)
@@ -455,9 +459,7 @@ func intToHexCDAB[T integer](n T, byteSize int) string {
 		binary.BigEndian.PutUint64(bytes, uint64(n))
 	}
 
-	// Swap to CDAB order
-	swapped := swapToCDAB(bytes)
-	return hex.EncodeToString(swapped)
+	return hex.EncodeToString(bytes)
 }
 
 // binaryToIntBADC converts a binary string to an integer type using BADC byte order.
