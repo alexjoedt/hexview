@@ -300,8 +300,8 @@ func intToBinary[T integer](n T, byteSize int, endian binary.ByteOrder) string {
 
 // swapToBADC swaps bytes to Mid-Big Endian (BADC) byte order.
 // For 2-byte values: equivalent to big-endian (no swap needed)
-// For 4-byte values: swap word pairs [A,B,C,D] → [B,A,D,C]
-// For 8-byte values: swap 32-bit halves [A,B,C,D,E,F,G,H] → [E,F,G,H,A,B,C,D]
+// For 4-byte values: swap bytes within each 16-bit word [A,B,C,D] → [B,A,D,C]
+// For 8-byte values: swap bytes within each 16-bit word [A,B,C,D,E,F,G,H] → [B,A,D,C,F,E,H,G]
 func swapToBADC(bytes []byte) []byte {
 	result := make([]byte, len(bytes))
 	copy(result, bytes)
@@ -315,9 +315,11 @@ func swapToBADC(bytes []byte) []byte {
 		result[0], result[1] = bytes[1], bytes[0]
 		result[2], result[3] = bytes[3], bytes[2]
 	case 8:
-		// Swap 32-bit words
-		result[0], result[1], result[2], result[3] = bytes[4], bytes[5], bytes[6], bytes[7]
-		result[4], result[5], result[6], result[7] = bytes[0], bytes[1], bytes[2], bytes[3]
+		// Swap bytes within each 16-bit word
+		result[0], result[1] = bytes[1], bytes[0]
+		result[2], result[3] = bytes[3], bytes[2]
+		result[4], result[5] = bytes[5], bytes[4]
+		result[6], result[7] = bytes[7], bytes[6]
 	}
 
 	return result
